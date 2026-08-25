@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dbt-multidocs"
-version = "0.1.0"
+version = "0.1.1"
 description = "Merge multiple dbt projects into one self-contained cross-project data lineage page - no warehouse connection, no dependencies."
 readme = "README.md"
 authors = [{ name = "Raghuram Sirigiri" }]

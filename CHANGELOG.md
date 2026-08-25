@@ -6,6 +6,23 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-25
+
+Documentation only. No code changes: the installed package behaves exactly as
+0.1.0.
+
+### Changed
+
+- README and docs now install with `pip install dbt-multidocs` rather than a
+  source checkout, and link the published documentation and the live example
+  lineage page.
+- Corrected the install instructions, which had no clone step and so could not
+  work as written, and a quickstart that mixed a Windows path into a
+  backslash-continued bash block.
+- Scoped two overstated claims: warehouse support is "any adapter should work,
+  DuckDB is what has been tested", and `dbt docs generate` needs the warehouse
+  for the catalog specifically.
+
 ### Added
 
 - **Viewport culling.** Only the slice of the graph inside the viewport is built
@@ -81,5 +98,6 @@ First release, published to PyPI as
   themes. Inferred edges render dotted with their own legend entry so a guessed
   link is never mistaken for a declared one.
 
-[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/raghuramsirigiri/dbt-multidocs/releases/tag/v0.1.0
