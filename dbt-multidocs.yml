@@ -1,0 +1,8 @@
+title: Enterprise dbt Lineage
+projects:
+  - path: ../dbt-project/dbt_staging
+    label: Staging
+  - path: ../dbt-project/dbt_core
+    label: Core
+  - path: ../dbt-project/dbt_analytics
+    label: Analytics

@@ -1,0 +1,1499 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23f97316'/%3E%3Cpath d='M4 4h2v8H4zm6 0h2v8h-2zM6 7h4v2H6z' fill='%23fff'/%3E%3C/svg%3E">
+<style id="page-style">
+:root{
+  --bg:#0f1117; --bg-2:#161923; --bg-3:#1d212d; --panel:#12151d;
+  --line:#272c3a; --line-2:#333a4c;
+  --fg:#e6e9f0; --fg-2:#a2abbd; --fg-3:#8b93a7;   /* 6.14:1 on --bg */
+  --accent:#f97316; --accent-soft:rgba(249,115,22,.15);
+  --edge:#8b96ab; --ok:#34d399; --warn:#fbbf24;
+  --shadow:0 8px 30px rgba(0,0,0,.45);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#f6f7f9; --bg-2:#ffffff; --bg-3:#eef0f4; --panel:#ffffff;
+  --line:#dfe3ea; --line-2:#c8cedb;
+  --fg:#151922; --fg-2:#4d5768; --fg-3:#5f6878;   /* 5.24:1 on --bg */
+  --accent:#ea580c; --accent-soft:rgba(234,88,12,.12);
+  --edge:#6b7789; --ok:#0f9d6e; --warn:#b45309;
+  --shadow:0 8px 30px rgba(20,25,40,.12);
+}
+*{box-sizing:border-box}
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+.skip{
+  position:absolute;left:10px;top:-48px;z-index:90;background:var(--accent);
+  color:#fff;padding:9px 14px;border-radius:0 0 7px 7px;text-decoration:none;
+  font-size:13px;transition:top .15s;
+}
+.skip:focus{top:0}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--fg);font-family:var(--sans);
+  font-size:13px;overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:none}
+a{color:var(--accent)}
+
+/* ---------- shell ---------- */
+#app{display:grid;grid-template-rows:auto 1fr;height:100%}
+header{
+  display:flex;align-items:center;gap:14px;
+  padding:9px max(14px,env(safe-area-inset-right)) 9px max(14px,env(safe-area-inset-left));
+  background:var(--bg-2);border-bottom:1px solid var(--line);z-index:20;
+}
+.brand{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
+.brand b{font-size:14px;letter-spacing:-.2px}
+.brand span{color:var(--fg-3);font-size:11px}
+.spacer{flex:1}
+.stat{display:flex;gap:4px;align-items:baseline;color:var(--fg-3);font-size:11.5px;white-space:nowrap}
+.stat b{color:var(--fg);font-size:13px;font-variant-numeric:tabular-nums}
+.stats{display:flex;gap:16px}
+.btn{
+  padding:5px 11px;border:1px solid var(--line-2);border-radius:6px;
+  background:var(--bg-3);color:var(--fg-2);font-size:12px;line-height:1.4;
+  transition:.12s;white-space:nowrap;
+}
+.btn:hover{color:var(--fg);border-color:var(--fg-3)}
+.btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+main{display:grid;grid-template-columns:236px 1fr 0;min-height:0;position:relative}
+main.detail{grid-template-columns:236px 1fr 380px}
+
+/* ---------- sidebar ---------- */
+aside{
+  background:var(--panel);border-right:1px solid var(--line);
+  overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:16px;
+}
+.sec>h4{
+  margin:0 0 8px;font-size:10px;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--fg-3);font-weight:600;display:flex;justify-content:space-between;align-items:center;
+}
+.sec h4 button{font-size:11px;color:var(--accent);letter-spacing:0;text-transform:none;
+  min-height:24px;padding:0 7px;border-radius:5px}
+.sec h4 button:hover{background:var(--accent-soft)}
+.search{position:relative}
+.search input{
+  width:100%;padding:7px 9px 7px 28px;border-radius:6px;border:1px solid var(--line-2);
+  background:var(--bg-3);color:var(--fg);font:inherit;
+}
+.search input:focus{outline:none;border-color:var(--accent)}
+.search svg{position:absolute;left:8px;top:8px;width:13px;height:13px;fill:var(--fg-3)}
+.search kbd{
+  position:absolute;right:7px;top:7px;font:11px var(--mono);color:var(--fg-3);
+  border:1px solid var(--line-2);border-radius:4px;padding:0 4px;
+}
+.lane-row{
+  display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:5px;min-height:28px;
+  cursor:pointer;user-select:none;
+}
+.lane-row:hover{background:var(--bg-3)}
+.lane-row.off{opacity:.38}
+.swatch{width:9px;height:9px;border-radius:3px;flex:none}
+.lane-row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.lane-row .ct{color:var(--fg-3);font-size:11.5px;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{
+  padding:3px 10px;border-radius:20px;border:1px solid var(--line-2);
+  color:var(--fg-2);font-size:11.5px;min-height:24px;
+  display:inline-flex;align-items:center;
+}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.toggles{display:flex;flex-direction:column;gap:6px}
+.tg{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--fg-2);
+  cursor:pointer;min-height:26px}
+.tg input{accent-color:var(--accent);margin:0;width:17px;height:17px;flex:none}
+
+/* ---------- canvas ---------- */
+#canvas{position:relative;overflow:hidden;background:var(--bg)}
+#canvas svg{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#canvas svg.grabbing{cursor:grabbing}
+.lane-band{fill:var(--bg-2);opacity:.55}
+.lane-band.alt{opacity:.28}
+.lane-label{
+  font:600 11px var(--sans);letter-spacing:.8px;text-transform:uppercase;
+  fill:var(--fg-3);
+}
+.col-label{font:600 11px var(--sans);letter-spacing:.8px;fill:var(--fg-3);text-transform:uppercase}
+.col-rule{stroke:var(--line);stroke-width:1;stroke-dasharray:2 5}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.3;opacity:.6;transition:opacity .12s}
+.edge.cross{stroke-width:1.9;opacity:.85}
+.edge.inferred{stroke-dasharray:1.5 4.5;stroke-width:1.9;opacity:.9}
+.edge-halo{fill:none;stroke:var(--bg);stroke-width:6;opacity:1}
+.edge.dim{opacity:.05}
+.edge-halo.dim{opacity:.25}
+.edge.hot{stroke:var(--accent)!important;stroke-width:2.6;opacity:1;stroke-dasharray:none}
+.edge.near{stroke-width:2.4;opacity:1}
+.pedge{fill:none;stroke-linecap:round}
+.pedge-label{font:600 11px var(--mono);fill:var(--fg);dominant-baseline:middle}
+.pedge-chip{fill:var(--bg);stroke:var(--line-2);stroke-width:1}
+.pnode rect{stroke-width:1.5}
+.pnode .pn{font:600 13px var(--sans);fill:var(--fg)}
+.pnode .ps{font:11px var(--mono);fill:var(--fg-3)}
+.node{cursor:pointer}
+.node:focus{outline:none}
+.node.kbdfocus rect.body{stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3}
+#canvas:focus{outline:none}
+#canvas:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.legend .arrow{width:22px;color:var(--edge);text-align:center;font-size:13px;line-height:1}
+.node rect.body{
+  fill:var(--bg-3);stroke:var(--line-2);stroke-width:1;rx:7;
+  transition:filter .12s;
+}
+.node:hover rect.body{stroke:var(--fg-3)}
+.node.sel rect.body{stroke:var(--accent);stroke-width:2}
+.node.dim{opacity:.13}
+.node.ghost{opacity:.42}
+.node.ghost .nm{font-weight:400}
+.node .nm{font:600 12.5px var(--sans);fill:var(--fg)}
+.node .sub{font:11px var(--mono);fill:var(--fg-3)}
+.node .accent{rx:2}
+.badge{font:11px var(--sans);fill:var(--bg);font-weight:700}
+.hud{
+  position:absolute;left:12px;bottom:12px;display:flex;gap:6px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px;
+  box-shadow:var(--shadow);
+}
+.hud button{padding:3px 9px;border-radius:5px;color:var(--fg-2);font-size:13px;
+  min-width:30px;min-height:28px}
+.hud button:hover{background:var(--bg-3);color:var(--fg)}
+.legend{
+  position:absolute;right:12px;bottom:12px;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+  box-shadow:var(--shadow);font-size:11px;color:var(--fg-2);
+  display:flex;flex-direction:column;gap:5px;
+}
+.legend div{display:flex;align-items:center;gap:7px}
+.legend .ln{width:22px;height:0;border-top:2px solid var(--line-2)}
+.legend .ln.x{border-top-style:dashed}
+.legend .ln.i{border-top-style:dotted}
+.empty{
+  position:absolute;inset:0;display:none;place-items:center;color:var(--fg-3);
+  padding:24px;text-align:center;line-height:1.6;
+}
+/* hover-independent read-out: mouse hover, keyboard focus and touch all feed it,
+   so nothing lives only in a title tooltip */
+.inspector{
+  position:absolute;left:12px;bottom:58px;max-width:min(440px,58%);
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:9px 12px;box-shadow:var(--shadow);display:none;
+}
+.inspector.on{display:block}
+.inspector b{font:600 12.5px var(--mono);color:var(--fg);word-break:break-all}
+.inspector .m{color:var(--fg-2);font-size:12px;margin-top:4px;line-height:1.45}
+.fbanner{
+  position:absolute;left:50%;transform:translateX(-50%);top:10px;z-index:6;
+  background:var(--panel);border:1px solid var(--line-2);border-radius:22px;
+  padding:5px 6px 5px 15px;display:none;align-items:center;gap:12px;
+  box-shadow:var(--shadow);font-size:12.5px;color:var(--fg-2);max-width:calc(100% - 24px);
+}
+.fbanner.on{display:flex}
+.fbanner .btn{min-height:26px;border-radius:16px}
+.age{
+  font-size:11.5px;color:var(--fg-3);border:1px solid var(--line-2);
+  border-radius:5px;padding:2px 7px;white-space:nowrap;
+}
+.age.stale{color:var(--warn);border-color:var(--warn)}
+
+/* ---------- detail ---------- */
+#detail{
+  background:var(--panel);border-left:1px solid var(--line);
+  overflow-y:auto;display:none;
+}
+main.detail #detail{display:block}
+.dhead{padding:14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.dhead .top{display:flex;align-items:flex-start;gap:10px}
+.dhead h2{margin:0;font-size:15px;font-family:var(--mono);word-break:break-all;flex:1;line-height:1.35}
+.dhead .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tag{
+  font-size:11px;padding:2px 7px;border-radius:4px;background:var(--bg-3);
+  color:var(--fg-2);border:1px solid var(--line);
+}
+.tag.pkg{color:var(--bg);font-weight:600;border:none}
+.dsec{padding:13px 14px;border-bottom:1px solid var(--line)}
+.dsec h5{
+  margin:0 0 8px;font-size:10px;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--fg-3);font-weight:600;
+}
+.desc{color:var(--fg-2);line-height:1.6;font-size:13px}
+table.cols{width:100%;border-collapse:collapse;font-size:12px}
+table.cols td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+table.cols tr:last-child td{border-bottom:none}
+table.cols .cn{font-family:var(--mono);color:var(--fg);white-space:nowrap}
+table.cols .ct{font-family:var(--mono);color:var(--fg-3);font-size:11px;white-space:nowrap}
+table.cols .cd{color:var(--fg-2);line-height:1.45}
+table.cols tr.untested .cn{color:var(--fg-2)}
+.tbadges{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.tb{
+  font:11px/1.5 var(--sans);padding:2px 7px 2px 5px;border-radius:3px;
+  border:1px solid var(--ok);color:var(--ok);display:inline-flex;align-items:center;gap:3px;
+  white-space:nowrap;
+}
+.tb::before{content:"\2713";font-size:10px}
+.tb.none{border-color:var(--warn);color:var(--warn)}
+.tb.none::before{content:"\26A0"}
+.tb.rel::before{content:"\21C4"}
+.tb.uniq::before{content:"\2460"}
+.tb.acc::before{content:"\2261"}
+.coverbar{
+  height:4px;border-radius:2px;background:var(--bg-3);overflow:hidden;margin:8px 0 4px;
+}
+.coverbar i{display:block;height:100%;background:var(--ok)}
+.coverlabel{font-size:11.5px;color:var(--fg-3)}
+.linklist{display:flex;flex-direction:column;gap:3px}
+.linklist button{
+  text-align:left;font-family:var(--mono);font-size:12px;color:var(--fg-2);
+  padding:3px 6px;border-radius:5px;display:flex;align-items:center;gap:7px;
+}
+.linklist button{min-height:26px}
+.linklist button:hover{background:var(--bg-3);color:var(--fg)}
+.linklist .dot{width:7px;height:7px;border-radius:2px;flex:none}
+.linklist .x{margin-left:auto;font-size:9px;color:var(--accent);font-family:var(--sans)}
+.sqlbar{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.sqlbar .seg{display:flex;border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
+.sqlbar .seg button{padding:4px 12px;font-size:12px;color:var(--fg-3);min-height:26px}
+.sqlbar .seg button.on{background:var(--accent-soft);color:var(--accent)}
+.sqlbar .seg button+button{border-left:1px solid var(--line-2)}
+.sqlbar .copy{margin-left:auto;font-size:12px;color:var(--fg-3);padding:4px 10px;min-height:26px;
+  border:1px solid var(--line-2);border-radius:6px}
+.sqlbar .copy:hover{color:var(--fg)}
+.codewrap{
+  background:var(--bg);border:1px solid var(--line);border-radius:6px;
+  overflow:auto;max-height:420px;
+}
+table.code{border-collapse:collapse;font:12px/1.7 var(--mono);width:100%}
+table.code td{padding:0 10px 0 0;vertical-align:top;white-space:pre}
+table.code td.gutter{
+  width:1%;padding:0 9px;text-align:right;color:var(--fg-3);opacity:.55;
+  user-select:none;position:sticky;left:0;background:var(--bg);
+  border-right:1px solid var(--line);
+}
+table.code tr:first-child td{padding-top:8px}
+table.code tr:last-child td{padding-bottom:8px}
+.sql-kw{color:#c084fc;font-weight:600}
+.sql-fn{color:#38bdf8}
+.sql-str{color:#34d399}
+.sql-num{color:#fbbf24}
+.sql-jinja{color:#f97316}
+.sql-com{color:var(--fg-3);font-style:italic}
+:root[data-theme="light"] .sql-kw{color:#7e22ce}
+:root[data-theme="light"] .sql-fn{color:#0369a1}
+:root[data-theme="light"] .sql-str{color:#047857}
+:root[data-theme="light"] .sql-num{color:#b45309}
+:root[data-theme="light"] .sql-jinja{color:#c2410c}
+details>summary{cursor:pointer;color:var(--fg-3);font-size:11px;margin-bottom:7px;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"▸ ";color:var(--accent)}
+details[open]>summary::before{content:"▾ "}
+.testpill{display:inline-block;font-size:11.5px;padding:2px 7px;border-radius:4px;background:var(--bg-3);border:1px solid var(--line);color:var(--fg-2);margin:0 4px 4px 0;font-family:var(--mono)}
+.testpill b{color:var(--fg);font-family:var(--sans)}
+
+/* ---------- cross-project modal ---------- */
+#modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
+  place-items:center;z-index:60;padding:24px;
+}
+#modal.on{display:grid}
+.mbox{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow);max-width:880px;width:100%;max-height:82vh;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.mbox header{background:transparent;border-bottom:1px solid var(--line)}
+.mbody{overflow:auto;padding:0 16px 16px}
+.pair{margin-top:16px}
+.pair h6{
+  margin:0 0 7px;font-size:12px;display:flex;align-items:center;gap:8px;font-weight:600;
+}
+.pair .arrow{color:var(--fg-3)}
+table.xp{width:100%;border-collapse:collapse;font-size:11.5px;font-family:var(--mono)}
+table.xp{table-layout:fixed}
+table.xp td{padding:4px 7px;border-bottom:1px solid var(--line);color:var(--fg-2);width:50%;overflow:hidden;text-overflow:ellipsis}
+table.xp td.to{color:var(--fg)}
+.scroll-hint{color:var(--fg-3);font-size:11px;padding:12px 0 0}
+@media(max-width:1240px){ .stats .stat:nth-child(n+4){display:none} }
+@media(max-width:1080px){ .stats{display:none} }
+@media(max-width:980px){ .brand span{display:none} }
+/* Below 900px the sidebar becomes a drawer and the detail panel a bottom sheet.
+   Hiding them outright used to leave a graph you could not search or tap. */
+@media(max-width:900px){
+  header{overflow-x:auto;scrollbar-width:none}
+  header::-webkit-scrollbar{display:none}
+  #btn-menu{display:inline-flex}
+  main,main.detail{grid-template-columns:1fr}
+  aside{
+    position:fixed;left:0;top:0;bottom:0;width:min(300px,86vw);z-index:70;
+    transform:translateX(-101%);transition:transform .2s ease;
+    box-shadow:var(--shadow);
+  }
+  body.drawer aside{transform:none}
+  #backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:65}
+  body.drawer #backdrop{display:block}
+  #detail{
+    position:fixed;left:0;right:0;bottom:0;top:auto;max-height:74vh;z-index:60;
+    border-left:none;border-top:1px solid var(--line-2);
+    border-radius:14px 14px 0 0;box-shadow:var(--shadow);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  main.detail #detail{display:block}
+  .inspector{display:none!important}
+  .legend{font-size:11px;bottom:8px;right:8px}
+}
+@media(min-width:901px){ #btn-menu,#backdrop{display:none} }
+
+@media print{
+  body{overflow:visible;background:#fff}
+  header,aside,.hud,.legend,.inspector,.fbanner,#modal,.skip,#backdrop{display:none!important}
+  #app{display:block;height:auto}
+  main,main.detail{display:block}
+  #canvas{overflow:visible;height:auto}
+  #canvas svg{height:70vh}
+  #detail{display:block;border:none;max-height:none;position:static;page-break-before:always}
+  .codewrap{max-height:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#detail">Skip to details</a>
+<div id="status" class="sr-only" role="status" aria-live="polite"></div>
+<div id="app">
+  <header>
+    <div class="brand"><b>__TITLE__</b><span id="subtitle"></span></div>
+    <div class="stats" id="stats"></div>
+    <div class="spacer"></div>
+    <button class="btn" id="btn-menu" aria-label="Show filters" aria-expanded="false">Filters</button>
+    <button class="btn" id="btn-view">Project map</button>
+    <button class="btn" id="btn-xp">Cross-project deps</button>
+    <button class="btn" id="btn-xponly">Cross-project only</button>
+    <button class="btn" id="btn-theme">Light</button>
+  </header>
+  <div id="backdrop"></div>
+  <main id="main">
+    <aside>
+      <div class="sec search">
+        <svg viewBox="0 0 16 16"><path d="M6.5 1a5.5 5.5 0 104.02 9.23l3.12 3.12a.75.75 0 101.06-1.06l-3.12-3.12A5.5 5.5 0 006.5 1zm0 1.5a4 4 0 110 8 4 4 0 010-8z"/></svg>
+        <input id="q" placeholder="Search models…" autocomplete="off" spellcheck="false">
+        <kbd>/</kbd>
+      </div>
+      <div class="sec">
+        <h4>Projects <button id="lane-all">all</button></h4>
+        <div id="lanes"></div>
+      </div>
+      <div class="sec">
+        <h4>Tags <button id="tag-clear">clear</button></h4>
+        <div class="chips" id="tags"></div>
+      </div>
+      <div class="sec">
+        <h4>Show</h4>
+        <div class="toggles">
+          <label class="tg"><input type="checkbox" id="t-seeds" checked> Seeds (raw layer)</label>
+          <label class="tg"><input type="checkbox" id="t-labels" checked> Column / test counts</label>
+          <label class="tg"><input type="checkbox" id="t-compact"> Compact nodes</label>
+          <label class="tg"><input type="checkbox" id="t-untested"> Only models with no tests</label>
+        </div>
+      </div>
+      <div class="sec" style="margin-top:auto">
+        <h4>Selection</h4>
+        <div class="toggles">
+          <label class="tg"><input type="checkbox" id="t-focus" checked> Dim unrelated on select</label>
+        </div>
+        <p style="color:var(--fg-3);font-size:11px;line-height:1.5;margin:8px 0 0">
+          Click a node for details &amp; lineage. Drag to pan, scroll to zoom.
+          Arrow keys pan, <kbd style="font-family:var(--mono)">+</kbd>/<kbd
+          style="font-family:var(--mono)">-</kbd> zoom,
+          <kbd style="font-family:var(--mono)">Esc</kbd> clears.
+        </p>
+      </div>
+    </aside>
+    <div id="canvas" tabindex="0" role="application"
+         aria-label="Model lineage graph. Arrow keys move between models, Enter opens details."
+         aria-describedby="canvas-help">
+      <p id="canvas-help" class="sr-only">Swimlanes group models by project; columns are dependency depth.</p>
+      <svg id="svg" aria-hidden="false"><defs><marker id="arw" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--edge)"/></marker><marker id="arw-hot" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L7,4 L0,7 z" fill="var(--accent)"/></marker></defs><g id="viewport"><g id="g-bands"></g><g id="g-halos"></g><g id="g-edges"></g><g id="g-nodes"></g></g></svg>
+      <div class="empty" id="empty">No nodes match the current filters.</div>
+      <div class="inspector" id="inspector" aria-hidden="true"></div>
+      <div class="fbanner" id="fbanner">
+        <span id="fbanner-text"></span>
+        <button class="btn" id="fbanner-reset">Reset filters</button>
+      </div>
+      <div class="hud">
+        <button id="zoom-out" aria-label="Zoom out">−</button><button id="zoom-in" aria-label="Zoom in">+</button><button id="fit">Fit</button><span style="width:1px;background:var(--line);margin:2px 3px"></span><button id="btn-link" title="Copy a link to this exact view">Link</button><button id="btn-png">PNG</button><button id="btn-svg">SVG</button>
+      </div>
+      <div class="legend" id="legend">
+        <div><span class="ln"></span> within project</div>
+        <div><span class="ln x" id="lgx"></span> crosses project</div>
+        <div><span class="ln i" id="lgi"></span> inferred from source()</div>
+        <div><span class="arrow">&rarr;</span> flows downstream</div>
+        <div><span class="arrow" style="color:var(--accent)">&#9473;</span> selected lineage</div>
+      </div>
+      <div class="legend" id="plegend" style="display:none">
+        <div><b style="color:var(--fg)">Project map</b></div>
+        <div><span class="ln" style="border-top-width:5px"></span> thicker = more dependencies</div>
+        <div><span class="arrow">&rarr;</span> number = models depended on</div>
+        <div style="color:var(--fg-3)">Click a project to open it in context</div>
+      </div>
+    </div>
+    <div id="detail" role="region" aria-label="Node details" tabindex="-1"></div>
+  </main>
+</div>
+
+<div id="modal"><div class="mbox">
+  <header><b>Cross-project dependencies</b><div class="spacer"></div><button class="btn" id="modal-close">Close</button></header>
+  <div class="mbody" id="mbody"></div>
+</div></div>
+
+<script id="graph-data" type="application/json">__GRAPH_DATA__</script>
+<script>
+"use strict";
+const DATA = JSON.parse(document.getElementById('graph-data').textContent);
+const NODES = DATA.nodes, PKGS = DATA.packages;
+const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+const pkgColor = Object.fromEntries(PKGS.map(p => [p.name, p.color]));
+
+/* ---------- geometry (density-dependent) ---------- */
+const COL_GAP = 84, ROW_GAP = 10, LANE_PAD = 16, LANE_HEAD = 20;
+let NW = 232, NH = 42, COL_W = NW + COL_GAP, ROW_H = NH + ROW_GAP;
+function applyDensity() {
+  NW = state.compact ? 176 : 232;
+  NH = state.compact ? 30 : 42;
+  COL_W = NW + (state.compact ? 64 : COL_GAP);
+  ROW_H = NH + (state.compact ? 8 : ROW_GAP);
+}
+const SVG_NODE_CEILING = 300;   // past this, SVG layout stops being interactive
+
+/* ---------- state ---------- */
+const state = {
+  hiddenPkgs: new Set(), tags: new Set(), q: '',
+  seeds: true, labels: true, untestedOnly: false, xpOnly: false, focusDim: true,
+  compact: false, sel: null, hover: null, focusId: null,
+  view: 'models', sqlMode: 'source',
+  layout: null, tf: {x:0, y:0, k:1}
+};
+
+const $ = s => document.querySelector(s);
+const svg = $('#svg'), viewport = $('#viewport');
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t, a = {}) => { const e = document.createElementNS(NS, t);
+  for (const k in a) e.setAttribute(k, a[k]); return e; };
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ---------- filtering ---------- */
+function passesBase(n) {
+  if (state.hiddenPkgs.has(n.pkg)) return false;
+  if (!state.seeds && n.type === 'seed') return false;
+  if (state.untestedOnly && !(n.type === 'model' && n.test_count === 0)) return false;
+  if (state.tags.size && !n.tags.some(t => state.tags.has(t))) return false;
+  return true;
+}
+function visibleNodes() {
+  const q = state.q.trim().toLowerCase();
+  const base = NODES.filter(passesBase);
+  NODES.forEach(n => { n._ghost = false; });
+  if (!q) return base;
+  // columns are searchable too: "which model has merchant_id?" is a real question
+  const hit = n => n.name.toLowerCase().includes(q)
+    || (n.desc || '').toLowerCase().includes(q)
+    || n.pkg.toLowerCase().includes(q)
+    || n.tags.some(t => t.toLowerCase().includes(q))
+    || (n.columns || []).some(c => c.name.toLowerCase().includes(q));
+  const matched = new Set(base.filter(hit).map(n => n.id));
+  if (!matched.size) return [];
+  // keep one hop of context around each match so a search still reads as lineage
+  const keep = new Set(matched);
+  for (const id of matched)
+    for (const nb of byId[id].parents.concat(byId[id].children))
+      if (passesBase(byId[nb])) keep.add(nb);
+  const out = base.filter(n => keep.has(n.id));
+  out.forEach(n => { n._ghost = !matched.has(n.id); });
+  return out;
+}
+function visibleEdges(vis) {
+  return DATA.edges.filter(e => vis.has(e[0]) && vis.has(e[1]))
+    .filter(e => !state.xpOnly || byId[e[0]].pkg !== byId[e[1]].pkg);
+}
+
+/* ---------- layout: swimlane per project x depth column ---------- */
+function layout() {
+  applyDensity();
+  const nodes = visibleNodes();
+  const vis = new Set(nodes.map(n => n.id));
+  let edges = visibleEdges(vis);
+  if (state.xpOnly) {
+    const keep = new Set(edges.flat());
+    nodes.length && nodes.splice(0, nodes.length, ...nodes.filter(n => keep.has(n.id)));
+    vis.clear(); nodes.forEach(n => vis.add(n.id));
+  }
+  const maxDepth = Math.max(0, ...nodes.map(n => n.depth));
+  const lanes = [];
+  const slots = {};                                   // pkg -> depth -> count
+  for (const p of PKGS) {
+    if (state.hiddenPkgs.has(p.name)) continue;
+    const mine = nodes.filter(n => n.pkg === p.name);
+    if (!mine.length) continue;
+    const cells = {};
+    mine.sort((a, b) => a.depth - b.depth || a.name.localeCompare(b.name));
+    let rows = 0;
+    for (const n of mine) { cells[n.depth] = (cells[n.depth] || 0) + 1;
+      rows = Math.max(rows, cells[n.depth]); }
+    lanes.push({ pkg: p, nodes: mine, rows, color: p.color });
+    slots[p.name] = {};
+  }
+  let y = 10;
+  for (const lane of lanes) {
+    lane.y = y;
+    lane.h = LANE_HEAD + lane.rows * ROW_H - ROW_GAP + LANE_PAD;
+    const used = {};
+    for (const n of lane.nodes) {
+      const i = used[n.depth] = (used[n.depth] === undefined ? 0 : used[n.depth] + 1);
+      n._x = 60 + n.depth * COL_W;
+      n._y = y + LANE_HEAD + i * ROW_H;
+    }
+    y += lane.h + 10;
+  }
+  return { nodes, edges, lanes, maxDepth, width: 60 + (maxDepth + 1) * COL_W + 40, height: y + 10 };
+}
+
+/* ---------- render ---------- */
+function syncView() {
+  const on = state.view === 'projects';
+  const b = $('#btn-view');
+  b.classList.toggle('on', on);
+  b.textContent = on ? 'Model lineage' : 'Project map';
+  b.setAttribute('aria-pressed', String(on));
+  $('#legend').style.display = on ? 'none' : 'flex';
+  $('#plegend').style.display = on ? 'flex' : 'none';
+}
+function render(keepView) {
+  syncView();
+  if (state.view === 'projects') return renderProjects(keepView);
+  const L = state.layout = layout();
+  const gb = $('#g-bands'), gh = $('#g-halos'), ge = $('#g-edges'), gn = $('#g-nodes');
+  gb.textContent = gh.textContent = ge.textContent = gn.textContent = '';
+  $('#empty').style.display = L.nodes.length ? 'none' : 'grid';
+
+  // depth column rules + labels
+  for (let d = 0; d <= L.maxDepth; d++) {
+    const x = 60 + d * COL_W + NW / 2;
+    gb.appendChild(el('line', { class:'col-rule', x1:x, x2:x, y1:2, y2:L.height }));
+    const t = el('text', { class:'col-label', x, y:-8, 'text-anchor':'middle' });
+    t.textContent = d === 0 ? 'SOURCE' : 'DEPTH ' + d;
+    gb.appendChild(t);
+  }
+  // lane bands
+  L.lanes.forEach((lane, i) => {
+    gb.appendChild(el('rect', { class:'lane-band' + (i % 2 ? ' alt' : ''),
+      x:8, y:lane.y, width:L.width - 16, height:lane.h, rx:10 }));
+    gb.appendChild(el('rect', { x:8, y:lane.y, width:3, height:lane.h, rx:1.5, fill:lane.color, opacity:.9 }));
+    const t = el('text', { class:'lane-label', x:22, y:lane.y + 15 });
+    t.textContent = lane.pkg.label;
+    gb.appendChild(t);
+  });
+
+  // edges — drawn twice: a background-coloured casing, then the line itself,
+  // so crossings read as over/under instead of a woven mesh
+  state.els = { edges: [], nodes: new Map() };
+  // spread parallel departures/arrivals so bundles don't collapse into one stroke
+  const outIdx = {}, inIdx = {};
+  for (const [a, b] of L.edges) {
+    outIdx[a] = (outIdx[a] || 0) + 1;
+    inIdx[b] = (inIdx[b] || 0) + 1;
+  }
+  const INFERRED = new Set((DATA.inferred_edges || []).map(e => e[0] + '\u0000' + e[1]));
+  const outSeen = {}, inSeen = {};
+  for (const [a, b] of L.edges) {
+    const s = byId[a], t = byId[b];
+    const oi = outSeen[a] = (outSeen[a] === undefined ? 0 : outSeen[a] + 1);
+    const ii = inSeen[b] = (inSeen[b] === undefined ? 0 : inSeen[b] + 1);
+    const fanOut = (oi - (outIdx[a] - 1) / 2) * Math.min(7, 22 / outIdx[a]);
+    const fanIn = (ii - (inIdx[b] - 1) / 2) * Math.min(7, 22 / inIdx[b]);
+    const x1 = s._x + NW, y1 = s._y + NH / 2 + fanOut;
+    const x2 = t._x - 7, y2 = t._y + NH / 2 + fanIn;
+    const dx = Math.max(40, (x2 - x1) * .5);
+    const cross = s.pkg !== t.pkg;
+    const inferred = INFERRED.has(a + '\u0000' + b);
+    const d = `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+
+    const halo = el('path', { d, class:'edge-halo' });
+    const p = el('path', {
+      d,
+      class:'edge' + (cross ? ' cross' : '') + (inferred ? ' inferred' : ''),
+      stroke: cross ? t.color : undefined,
+      'stroke-dasharray': inferred ? '1.5 4.5' : (cross ? '6 4' : undefined),
+      'marker-end':'url(#arw)'
+    });
+    const tip = el('title');
+    tip.textContent = `${s.name} → ${t.name}` + (cross ? `  (${s.pkg} → ${t.pkg})` : '')
+      + (inferred ? '  · inferred from matching relation' : '');
+    p.appendChild(tip);
+
+    state.els.edges.push({ a, b, path:p, halo });
+    gh.appendChild(halo);
+    ge.appendChild(p);
+  }
+
+  // nodes
+  let idx = 0;
+  for (const n of L.nodes) {
+    idx++;
+    const g = el('g', { class:'node', transform:`translate(${n._x},${n._y})` });
+    if (n._ghost) g.classList.add('ghost');
+    state.els.nodes.set(n.id, g);
+    g.appendChild(el('rect', { class:'body', width:NW, height:NH, rx:7 }));
+    g.appendChild(el('rect', { class:'accent', x:0, y:8, width:3.5, height:NH - 16, fill:n.color, rx:2 }));
+    const nm = el('text', { class:'nm', x:13, y: state.compact ? 19.5 : 19 });
+    nm.textContent = trunc(n.name, state.compact ? 21 : 30);
+    g.appendChild(nm);
+    if (!state.compact) {
+      const sub = el('text', { class:'sub', x:13, y:33 });
+      sub.textContent = state.labels
+        ? `${n.type === 'seed' ? 'seed' : n.mat} · ${n.col_count} cols · ${n.test_count} tests`
+        : (n.type === 'seed' ? 'seed' : n.mat);
+      g.appendChild(sub);
+    }
+    if (n.type === 'model' && n.test_count === 0) {
+      const w = el('circle', { cx:NW - 13, cy: state.compact ? 15 : 14, r:4, fill:'var(--warn)' });
+      w.appendChild(el('title')).textContent = 'No tests on this model';
+      g.appendChild(w);
+    }
+    if ((n.xp_out || n.xp_in) && !state.compact) {
+      const b = el('text', { class:'sub', x:NW - 13, y:34, 'text-anchor':'end', fill:n.color });
+      b.textContent = `↔${n.xp_out + n.xp_in}`;
+      const tt = el('title'); tt.textContent = `${n.xp_in} cross-project parent(s), ${n.xp_out} cross-project child(ren)`;
+      b.appendChild(tt);
+      g.appendChild(b);
+    }
+    const tip = el('title');
+    tip.textContent = `${n.pkg}.${n.name}\n${n.desc || ''}`;
+    g.appendChild(tip);
+    // the canvas owns focus; nodes are only referenced by aria-activedescendant
+    g.setAttribute('id', 'gn-' + idx);
+    g.setAttribute('role', 'option');
+    g.setAttribute('aria-label', nodeLabel(n));
+    g.addEventListener('click', ev => { ev.stopPropagation(); state.focusId = n.id; select(n.id); });
+    g.__node = n;
+    g.addEventListener('mouseenter', () => {
+      // keyboard focus owns the inspector: panning can slide a node under a
+      // stationary cursor, and that must not hijack the read-out mid-navigation
+      if (document.activeElement !== $('#canvas')) setInspector(n);
+      if (state.sel) return;
+      state.hover = n.id; applyEmphasis();
+    });
+    g.addEventListener('mouseleave', () => {
+      if (!state.sel && document.activeElement !== $('#canvas')) setInspector(null);
+      if (state.sel) return;
+      state.hover = null; applyEmphasis();
+    });
+    gn.appendChild(g);
+  }
+  applyEmphasis();
+  rove();
+  announce();
+  syncBanner();
+  if (L.nodes.length > SVG_NODE_CEILING) {
+    $('#fbanner-text').textContent =
+      `${L.nodes.length} nodes on screen — filter down for smooth interaction`;
+    $('#fbanner').classList.add('on');
+  }
+  if (!keepView) requestAnimationFrame(() => fitView('width'));
+}
+const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+
+// Selection and hover only change emphasis, never layout. Repainting classes on
+// the existing elements keeps the DOM stable — rebuilding it on mouseenter used
+// to destroy the node between mousedown and mouseup, swallowing the click.
+function applyEmphasis() {
+  const els = state.els;
+  if (!els) return;
+  const hot = state.sel ? relatives(state.sel) : null;
+  const near = (!state.sel && state.hover) ? state.hover : null;
+
+  for (const [id, g] of els.nodes) {
+    g.classList.toggle('sel', state.sel === id);
+    g.classList.toggle('dim', !!(hot && state.focusDim && !hot.has(id)));
+  }
+  for (const { a, b, path, halo } of els.edges) {
+    path.classList.remove('hot', 'dim', 'near');
+    halo.classList.remove('dim');
+    path.setAttribute('marker-end', 'url(#arw)');
+    if (hot) {
+      const on = hot.has(a) && hot.has(b);
+      path.classList.add(on ? 'hot' : 'dim');
+      halo.classList.toggle('dim', !on);
+      if (on) path.setAttribute('marker-end', 'url(#arw-hot)');
+    } else if (near) {
+      const on = a === near || b === near;
+      path.classList.add(on ? 'near' : 'dim');
+      halo.classList.toggle('dim', !on);
+    }
+  }
+}
+
+function nodeLabel(n) {
+  const t = n.test_count === 0 && n.type === 'model' ? ', no tests' : `, ${n.test_count} tests`;
+  return `${n.name}, ${n.pkg}, ${n.type === 'seed' ? 'seed' : n.mat}${t}, `
+       + `${n.parents.length} upstream, ${n.children.length} downstream`;
+}
+
+// Everything a tooltip would say also lands here, so hover is never the only
+// route to it — mouse, keyboard focus and tap all drive the same read-out.
+function setInspector(n) {
+  const box = $('#inspector');
+  if (!n) { box.classList.remove('on'); box.innerHTML = ''; return; }
+  const xp = (n.xp_in || n.xp_out)
+    ? ` · ${n.xp_in} cross-project in, ${n.xp_out} out` : '';
+  box.innerHTML = `<b>${esc(n.pkg)}.${esc(n.name)}</b>
+    <div class="m">${esc(n.type === 'seed' ? 'seed' : n.mat)} ·
+      ${n.col_count} cols · ${n.test_count} tests${esc(xp)}</div>
+    ${n.desc ? `<div class="m">${esc(trunc(n.desc, 170))}</div>` : ''}`;
+  box.classList.add('on');
+}
+
+function announce(msg) {
+  const st = $('#status');
+  if (msg) { st.textContent = msg; return; }
+  const L = state.layout;
+  if (!L) return;
+  const hidden = state.hiddenPkgs.size;
+  st.textContent = `${L.nodes.length} of ${NODES.length} nodes shown`
+    + (hidden ? `, ${hidden} project${hidden > 1 ? 's' : ''} hidden` : '')
+    + `, ${L.edges.length} dependenc${L.edges.length === 1 ? 'y' : 'ies'}`;
+}
+
+// Chrome does not reliably put SVG <g> elements in the tab order and never fires
+// focus events on them, so the graph is a composite widget: #canvas is the single
+// tab stop and points at the active node with aria-activedescendant.
+function rove() {
+  const els = state.els;
+  if (!els || !els.nodes.size) { $('#canvas').removeAttribute('aria-activedescendant'); return; }
+  if (!state.focusId || !els.nodes.has(state.focusId)) {
+    state.focusId = els.nodes.keys().next().value;
+  }
+  const canvas = $('#canvas');
+  const focused = document.activeElement === canvas;
+  for (const [id, g] of els.nodes) g.classList.toggle('kbdfocus', focused && id === state.focusId);
+  const g = els.nodes.get(state.focusId);
+  if (g && g.id) canvas.setAttribute('aria-activedescendant', g.id);
+}
+
+function moveFocus(dx, dy) {
+  const n = byId[state.focusId];
+  if (!n || n._x === undefined) return;
+  let best = null, bestScore = Infinity;
+  for (const m of state.layout.nodes) {
+    if (m.id === n.id) continue;
+    const along = (m._x - n._x) * dx + (m._y - n._y) * dy;
+    const across = Math.abs((m._x - n._x) * dy + (m._y - n._y) * dx);
+    if (along <= 0) continue;
+    const score = along + across * 2.5;
+    if (score < bestScore) { bestScore = score; best = m; }
+  }
+  if (!best) return;
+  state.focusId = best.id;
+  rove();
+  setInspector(best);
+  centerOn(best.id, true);
+  announce(nodeLabel(best));
+}
+
+$('#canvas').addEventListener('keydown', e => {
+  if (state.view !== 'models') return;
+  const dir = { ArrowRight:[1, 0], ArrowLeft:[-1, 0], ArrowDown:[0, 1], ArrowUp:[0, -1] }[e.key];
+  if (dir) { e.preventDefault(); moveFocus(dir[0], dir[1]); return; }
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    if (state.focusId) select(state.focusId);
+  }
+});
+$('#canvas').addEventListener('focus', () => {
+  rove();
+  const n = byId[state.focusId];
+  if (n) { setInspector(n); centerOn(n.id, true); announce(nodeLabel(n)); }
+});
+$('#canvas').addEventListener('blur', () => {
+  for (const [, g] of state.els?.nodes || []) g.classList.remove('kbdfocus');
+  if (!state.sel) setInspector(null);
+});
+
+// downstream blast radius — the question people actually ask of a lineage graph
+function impact(id) {
+  const seen = new Set(), stack = [id];
+  while (stack.length) {
+    const cur = stack.pop();
+    for (const c of byId[cur].children) if (!seen.has(c)) { seen.add(c); stack.push(c); }
+  }
+  const pkgs = new Set([...seen].map(x => byId[x].pkg));
+  return { models: seen.size, pkgs: pkgs.size };
+}
+
+function relatives(id) {
+  const set = new Set([id]);
+  const walk = (start, key) => {
+    const stack = [start];
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const nb of byId[cur][key]) if (!set.has(nb)) { set.add(nb); stack.push(nb); }
+    }
+  };
+  walk(id, 'parents'); walk(id, 'children');
+  return set;
+}
+
+/* ---------- project map: the 8-node rollup of the whole mesh ---------- */
+const PW = 210, PH = 62, PCOL = 300, PROW = 96;
+function renderProjects(keepView) {
+  const gb = $('#g-bands'), gh = $('#g-halos'), ge = $('#g-edges'), gn = $('#g-nodes');
+  gb.textContent = gh.textContent = ge.textContent = gn.textContent = '';
+  state.els = null;
+  $('#empty').style.display = 'none';
+
+  const cols = {};
+  for (const p of PKGS) (cols[p.depth] = cols[p.depth] || []).push(p);
+  const maxRows = Math.max(...Object.values(cols).map(c => c.length));
+  const pos = {};
+  for (const d in cols) {
+    cols[d].forEach((p, i) => {
+      const n = cols[d].length;
+      pos[p.name] = {
+        x: 60 + d * PCOL,
+        y: 60 + (maxRows - n) * PROW / 2 + i * PROW
+      };
+    });
+  }
+  const maxDepth = Math.max(...PKGS.map(p => p.depth));
+  for (let d = 0; d <= maxDepth; d++) {
+    const t = el('text', { class:'col-label', x:60 + d * PCOL + PW / 2, y:34, 'text-anchor':'middle' });
+    t.textContent = ['SOURCE PROJECTS', 'INTERMEDIATE', 'MARTS', 'CONSUMPTION'][d] || 'LAYER ' + d;
+    gb.appendChild(t);
+  }
+
+  const maxW = Math.max(...DATA.project_edges.map(e => e.weight));
+  for (const e of DATA.project_edges) {
+    const a = pos[e.from], b = pos[e.to];
+    if (!a || !b) continue;
+    const x1 = a.x + PW, y1 = a.y + PH / 2, x2 = b.x - 9, y2 = b.y + PH / 2;
+    const dx = Math.max(50, (x2 - x1) * .5);
+    const d = `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+    gh.appendChild(el('path', { d, class:'edge-halo', 'stroke-width':10 }));
+    const p = el('path', {
+      d, class:'pedge',
+      stroke: pkgColor[e.to],
+      'stroke-width': 1.5 + (e.weight / maxW) * 5,
+      opacity:.75,
+      'marker-end':'url(#arw)'
+    });
+    const tip = el('title');
+    tip.textContent = `${e.from} → ${e.to}: ${e.weight} model dependencies`;
+    p.appendChild(tip);
+    ge.appendChild(p);
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    const w = String(e.weight).length * 7 + 12;
+    ge.appendChild(el('rect', { class:'pedge-chip', x:mx - w / 2, y:my - 9, width:w, height:18, rx:9 }));
+    const lbl = el('text', {
+      class:'pedge-label', x:mx, y:my, 'text-anchor':'middle'
+    });
+    lbl.textContent = e.weight;
+    const ltip = el('title');
+    ltip.textContent = `${e.weight} model dependencies from ${e.from} to ${e.to}`;
+    lbl.appendChild(ltip);
+    ge.appendChild(lbl);
+  }
+
+  for (const p of PKGS) {
+    const at = pos[p.name];
+    const g = el('g', { class:'node pnode', transform:`translate(${at.x},${at.y})`,
+                        tabindex:'0', role:'button',
+                        'aria-label':`${p.name}, ${p.count} nodes` });
+    g.appendChild(el('rect', { class:'body', width:PW, height:PH, rx:9,
+                               stroke:p.color, fill:'var(--bg-3)' }));
+    g.appendChild(el('rect', { x:0, y:10, width:4, height:PH - 20, fill:p.color, rx:2 }));
+    const nm = el('text', { class:'pn', x:16, y:26 });
+    nm.textContent = p.label;
+    g.appendChild(nm);
+    const models = NODES.filter(n => n.pkg === p.name);
+    const tests = models.reduce((a, n) => a + n.test_count, 0);
+    const sub = el('text', { class:'ps', x:16, y:44 });
+    sub.textContent = `${p.count} nodes · ${tests} tests`;
+    g.appendChild(sub);
+    const open = () => {
+      state.view = 'models';
+      state.hiddenPkgs = new Set(PKGS.filter(q => q.name !== p.name
+        && !DATA.project_edges.some(e =>
+          (e.from === p.name && e.to === q.name) || (e.to === p.name && e.from === q.name))
+      ).map(q => q.name));
+      buildLanes(); render();
+    };
+    g.addEventListener('click', ev => { ev.stopPropagation(); open(); });
+    g.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); }
+    });
+    const tip = el('title');
+    tip.textContent = `${p.name} — click to open this project with its direct neighbours`;
+    g.appendChild(tip);
+    gn.appendChild(g);
+  }
+
+  state.layout = { nodes:[], edges:[], lanes:[],
+    width: 60 + (maxDepth + 1) * PCOL, height: 60 + maxRows * PROW + 40 };
+  if (!keepView) requestAnimationFrame(() => {
+    const L = state.layout, r = svg.getBoundingClientRect();
+    // only eight boxes here — never shrink them below readable, and centre both axes
+    const k = Math.min(1.15, Math.max(.5, Math.min(r.width / L.width, r.height / L.height) * .92));
+    state.tf = { k, x:(r.width - L.width * k) / 2, y:(r.height - L.height * k) / 2 };
+    applyTf();
+  });
+}
+
+/* ---------- pan / zoom ---------- */
+function applyTf() {
+  viewport.setAttribute('transform',
+    `translate(${state.tf.x},${state.tf.y}) scale(${state.tf.k})`);
+}
+function fitView(mode) {
+  const L = state.layout; if (!L || !L.nodes.length) return;
+  const r = svg.getBoundingClientRect();
+  const whole = Math.min(r.width / L.width, r.height / (L.height + 40), 1.1);
+  if (mode === 'width') {
+    // readable default: fit horizontally, park at the top and let the user pan down
+    const k = Math.min(1.05, Math.max(.72, (r.width - 32) / L.width));
+    state.tf = { k, x: L.width * k <= r.width ? (r.width - L.width * k) / 2 : 12, y:22 };
+  } else {
+    state.tf = { k:whole, x:(r.width - L.width * whole) / 2,
+                 y:(r.height - L.height * whole) / 2 + 16 * whole };
+  }
+  applyTf();
+}
+function zoomBy(f, cx, cy) {
+  const r = svg.getBoundingClientRect();
+  cx = cx === undefined ? r.width / 2 : cx; cy = cy === undefined ? r.height / 2 : cy;
+  const k2 = Math.min(2.4, Math.max(.12, state.tf.k * f));
+  state.tf.x = cx - (cx - state.tf.x) * (k2 / state.tf.k);
+  state.tf.y = cy - (cy - state.tf.y) * (k2 / state.tf.k);
+  state.tf.k = k2; applyTf();
+}
+// Pointer Events cover mouse, touch and pen from one code path; two pointers
+// pinch-zoom. touch-action:none stops the browser claiming the gesture first.
+let drag = null;
+const pointers = new Map();
+let pinch = null;
+
+svg.addEventListener('pointerdown', e => {
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pointers.size === 1) {
+    drag = { x:e.clientX, y:e.clientY, ox:state.tf.x, oy:state.tf.y, moved:false };
+    svg.classList.add('grabbing');
+    // deliberately NOT setPointerCapture: capturing on the <svg> retargets the
+    // follow-up click to the <svg>, which swallows every node click
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinch = { d:Math.hypot(a.x - b.x, a.y - b.y), k:state.tf.k,
+              cx:(a.x + b.x) / 2, cy:(a.y + b.y) / 2,
+              ox:state.tf.x, oy:state.tf.y };
+    drag = null;
+  }
+});
+addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  const r = svg.getBoundingClientRect();
+  if (pinch && pointers.size >= 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    const cx = (a.x + b.x) / 2 - r.left, cy = (a.y + b.y) / 2 - r.top;
+    const k2 = Math.min(2.4, Math.max(.12, pinch.k * (d / (pinch.d || 1))));
+    const px = pinch.cx - r.left, py = pinch.cy - r.top;
+    state.tf.x = cx - (px - pinch.ox) * (k2 / pinch.k);
+    state.tf.y = cy - (py - pinch.oy) * (k2 / pinch.k);
+    state.tf.k = k2;
+    applyTf();
+    return;
+  }
+  if (!drag) return;
+  state.tf.x = drag.ox + e.clientX - drag.x;
+  state.tf.y = drag.oy + e.clientY - drag.y;
+  if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
+  applyTf();
+});
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinch = null;
+  if (!pointers.size) { svg.classList.remove('grabbing'); }
+}
+addEventListener('pointerup', endPointer);
+addEventListener('pointercancel', endPointer);
+svg.addEventListener('pointerleave', e => { if (e.pointerType !== 'mouse') endPointer(e); });
+
+svg.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect();
+  zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - r.left, e.clientY - r.top);
+}, { passive:false });
+svg.addEventListener('click', () => { if (!drag || !drag.moved) select(null); });
+
+/* ---------- SQL rendering ---------- */
+const SQL_KW = new Set(('select|distinct|from|where|group|order|by|having|limit|offset|as|on|and|or|not|'
+  + 'in|is|null|case|when|then|else|end|join|left|right|full|inner|outer|cross|lateral|using|union|all|'
+  + 'intersect|except|with|over|partition|asc|desc|between|like|exists|qualify|window|create|table|view')
+  .split('|'));
+const SQL_FN = new Set(('sum|count|avg|min|max|cast|coalesce|round|abs|date_trunc|current_date|'
+  + 'row_number|rank|dense_rank|lag|lead|nullif|greatest|least|concat|extract').split('|'));
+
+// tokenise a single line; every branch emits escaped text, so the result is safe HTML
+const SQL_RE = /(\{\{[^}]*\}\}|\{%[^%]*%\})|(--.*$)|('(?:[^']|'')*')|("(?:[^"]|"")*")|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z_0-9$]*)/g;
+function highlightLine(line) {
+  let out = '', last = 0, m;
+  SQL_RE.lastIndex = 0;
+  while ((m = SQL_RE.exec(line))) {
+    out += esc(line.slice(last, m.index));
+    const [all, jinja, com, str1, str2, num, word] = m;
+    if (jinja) out += `<span class="sql-jinja">${esc(all)}</span>`;
+    else if (com) out += `<span class="sql-com">${esc(all)}</span>`;
+    else if (str1 || str2) out += `<span class="sql-str">${esc(all)}</span>`;
+    else if (num) out += `<span class="sql-num">${esc(all)}</span>`;
+    else if (word) {
+      const lw = word.toLowerCase();
+      out += SQL_KW.has(lw) ? `<span class="sql-kw">${esc(all)}</span>`
+           : SQL_FN.has(lw) ? `<span class="sql-fn">${esc(all)}</span>`
+           : esc(all);
+    }
+    last = m.index + all.length;
+  }
+  return out + esc(line.slice(last));
+}
+function sqlBlock(text) {
+  const rows = text.split('\n').map((l, i) =>
+    `<tr><td class="gutter">${i + 1}</td><td>${highlightLine(l) || '&nbsp;'}</td></tr>`).join('');
+  return `<div class="codewrap"><table class="code">${rows}</table></div>`;
+}
+
+/* ---------- detail panel ---------- */
+function select(id, skipHash) {
+  state.sel = id;
+  state.hover = null;
+  if (id) { state.focusId = id; rove(); }
+  $('#main').classList.toggle('detail', !!id);
+  if (id) {
+    renderDetail(byId[id]);
+    setInspector(byId[id]);
+    const imp = impact(id);
+    announce(`${byId[id].name} selected. ${imp.models} downstream models across ${imp.pkgs} projects.`);
+  } else {
+    setInspector(null);
+    announce();
+  }
+  applyEmphasis();
+  if (!skipHash) writeHash(!!id);
+}
+function nodeLink(id, note) {
+  const n = byId[id];
+  return `<button data-goto="${n.id}"><span class="dot" style="background:${n.color}"></span>${esc(n.name)}${note ? `<span class="x">${note}</span>` : ''}</button>`;
+}
+const TB_CLASS = { relationships:'rel', unique:'uniq', accepted_values:'acc' };
+function testBadge(t) {
+  return `<span class="tb ${TB_CLASS[t] || ''}">${esc(t)}</span>`;
+}
+function renderDetail(n) {
+  const imp = impact(n.id);
+  const columns = n.columns || [];
+  const tested = columns.filter(c => c.tests.length).length;
+  const cols = columns.map(c => `<tr class="${c.tests.length ? '' : 'untested'}">
+      <td class="cn">${esc(c.name)}${c.undeclared
+        ? ' <span class="tb none">not in YAML</span>' : ''}</td>
+      <td class="ct">${esc(c.type || '')}</td>
+      <td class="cd">${esc(c.desc || '')}
+        <div class="tbadges">${c.tests.length
+          ? c.tests.map(testBadge).join('')
+          : '<span class="tb none">no tests</span>'}</div></td></tr>`).join('');
+  const pct = columns.length ? Math.round(tested / columns.length * 100) : 0;
+  const coverage = columns.length ? `
+    <div class="coverbar"><i style="width:${pct}%"></i></div>
+    <div class="coverlabel">${tested} of ${columns.length} columns carry at least one test
+      &middot; ${pct}%</div>` : '';
+  const tests = Object.entries(n.tests || {})
+    .map(([k, v]) => `<span class="testpill"><b>${v}</b> ${esc(k)}</span>`).join('');
+  const par = n.parents.map(p => nodeLink(p, byId[p].pkg !== n.pkg ? 'cross-project' : '')).join('');
+  const chi = n.children.map(c => nodeLink(c, byId[c].pkg !== n.pkg ? 'cross-project' : '')).join('');
+  $('#detail').innerHTML = `
+    <div class="dhead">
+      <div class="top"><h2>${esc(n.name)}</h2>
+        <button class="btn" data-close>✕</button></div>
+      <div class="meta">
+        <span class="tag pkg" style="background:${n.color}">${esc(n.pkg)}</span>
+        <span class="tag">${esc(n.type === 'seed' ? 'seed' : n.mat)}</span>
+        <span class="tag">${esc(n.schema)}.${esc(n.alias || n.name)}</span>
+        ${n.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}
+      </div>
+    </div>
+    ${n.desc ? `<div class="dsec"><h5>Description</h5><div class="desc">${esc(n.desc)}</div></div>` : ''}
+    <div class="dsec"><h5>Impact</h5><div class="desc">${
+      imp.models
+        ? `Changing this affects <b>${imp.models}</b> downstream model${imp.models > 1 ? 's' : ''}
+           across <b>${imp.pkgs}</b> project${imp.pkgs > 1 ? 's' : ''}.`
+        : 'Nothing depends on this — it is a leaf node.'}</div></div>
+    <div class="dsec"><h5>Tests (${n.test_count})</h5>
+      ${tests || '<div class="desc" style="color:var(--warn)">No tests defined on this model.</div>'}
+      ${n.model_tests.length
+        ? `<div class="coverlabel" style="margin-top:7px">Table-level: ${
+             n.model_tests.map(esc).join(', ')}</div>` : ''}
+      ${coverage}</div>
+    ${cols ? `<div class="dsec"><h5>Columns (${n.col_count}) &amp; their tests</h5>
+      <table class="cols">${cols}</table></div>` : ''}
+    <div class="dsec"><h5>Upstream (${n.parents.length})</h5>
+      <div class="linklist">${par || '<span class="desc">none — this is a source node</span>'}</div></div>
+    <div class="dsec"><h5>Downstream (${n.children.length})</h5>
+      <div class="linklist">${chi || '<span class="desc">none — this is a leaf</span>'}</div></div>
+    ${n.sql_source ? `<div class="dsec"><h5>SQL</h5>
+      <div class="sqlbar">
+        <div class="seg">
+          <button data-sql="source" class="${state.sqlMode === 'source' ? 'on' : ''}">Source</button>
+          ${n.sql_compiled
+            ? `<button data-sql="compiled" class="${state.sqlMode === 'compiled' ? 'on' : ''}">Compiled</button>`
+            : ''}
+        </div>
+        <button class="copy" data-copy>Copy</button>
+      </div>
+      <div id="sqlhost">${sqlBlock(
+        state.sqlMode === 'compiled' && n.sql_compiled ? n.sql_compiled : n.sql_source)}</div>
+      </div>` : ''}
+    ${n.path ? `<div class="dsec"><h5>File</h5><div class="desc" style="font-family:var(--mono);font-size:11px">${esc(n.path)}</div></div>` : ''}
+  `;
+  $('#detail').scrollTop = 0;
+}
+$('#detail').addEventListener('click', e => {
+  const b = e.target.closest('[data-goto]');
+  if (b) { const id = b.dataset.goto;
+    if (state.hiddenPkgs.has(byId[id].pkg)) { state.hiddenPkgs.delete(byId[id].pkg); buildLanes(); }
+    select(id); centerOn(id); return; }
+  if (e.target.closest('[data-close]')) select(null);
+  const seg = e.target.closest('[data-sql]');
+  if (seg) { state.sqlMode = seg.dataset.sql; renderDetail(byId[state.sel]); return; }
+  if (e.target.closest('[data-copy]')) {
+    const n = byId[state.sel];
+    const text = state.sqlMode === 'compiled' && n.sql_compiled ? n.sql_compiled : n.sql_source;
+    navigator.clipboard?.writeText(text);
+    const b = e.target.closest('[data-copy]');
+    b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1200);
+  }
+});
+function centerOn(id, onlyIfOffscreen) {
+  const n = byId[id]; if (n._x === undefined) return;
+  const r = svg.getBoundingClientRect(), k = state.tf.k;
+  if (onlyIfOffscreen) {
+    const sx = n._x * k + state.tf.x, sy = n._y * k + state.tf.y;
+    const pad = 40;
+    if (sx > pad && sy > pad && sx + NW * k < r.width - pad && sy + NH * k < r.height - pad) return;
+  }
+  state.tf.x = r.width / 2 - (n._x + NW / 2) * k;
+  state.tf.y = r.height / 2 - (n._y + NH / 2) * k;
+  applyTf();
+}
+
+/* ---------- deep linking: the URL is the shareable unit ---------- */
+const keyOf = n => `${n.pkg}.${n.name}`;
+const byKey = Object.fromEntries(NODES.map(n => [keyOf(n), n]));
+
+function writeHash(push) {
+  const p = new URLSearchParams();
+  if (state.view !== 'models') p.set('view', state.view);
+  if (state.sel) p.set('node', keyOf(byId[state.sel]));
+  if (state.q.trim()) p.set('q', state.q.trim());
+  if (state.tags.size) p.set('tags', [...state.tags].join(','));
+  if (state.hiddenPkgs.size) p.set('hide', [...state.hiddenPkgs].join(','));
+  if (!state.seeds) p.set('seeds', '0');
+  if (state.untestedOnly) p.set('untested', '1');
+  if (state.xpOnly) p.set('xp', '1');
+  if (state.compact) p.set('compact', '1');
+  if (document.documentElement.dataset.theme === 'light') p.set('theme', 'light');
+  const hash = p.toString() ? '#' + p.toString() : location.pathname;
+  if (hash === (location.hash || location.pathname)) return;
+  history[push ? 'pushState' : 'replaceState'](null, '', hash);
+}
+
+function readHash() {
+  const p = new URLSearchParams(location.hash.replace(/^#/, ''));
+  state.view = p.get('view') === 'projects' ? 'projects' : 'models';
+  state.q = p.get('q') || '';
+  state.tags = new Set((p.get('tags') || '').split(',').filter(Boolean));
+  state.hiddenPkgs = new Set((p.get('hide') || '').split(',').filter(Boolean));
+  state.seeds = p.get('seeds') !== '0';
+  state.untestedOnly = p.get('untested') === '1';
+  state.xpOnly = p.get('xp') === '1';
+  state.compact = p.get('compact') === '1';
+  if (p.get('theme') === 'light') document.documentElement.dataset.theme = 'light';
+  const node = p.get('node');
+  state.sel = node && byKey[node] ? byKey[node].id
+            : node && NODES.find(n => n.name === node) ? NODES.find(n => n.name === node).id
+            : null;
+  syncControls();
+}
+
+// push every control back into the DOM after a hash-driven state change
+function syncControls() {
+  $('#q').value = state.q;
+  $('#t-seeds').checked = state.seeds;
+  $('#t-labels').checked = state.labels;
+  $('#t-untested').checked = state.untestedOnly;
+  $('#t-compact').checked = state.compact;
+  $('#t-focus').checked = state.focusDim;
+  $('#btn-xponly').classList.toggle('on', state.xpOnly);
+  $('#btn-theme').textContent =
+    document.documentElement.dataset.theme === 'light' ? 'Dark' : 'Light';
+  document.querySelectorAll('[data-tag]').forEach(b =>
+    b.classList.toggle('on', state.tags.has(b.dataset.tag)));
+  buildLanes();
+}
+
+addEventListener('popstate', () => {
+  readHash();
+  render();
+  $('#main').classList.toggle('detail', !!state.sel);
+  if (state.sel) renderDetail(byId[state.sel]);
+});
+
+/* ---------- active-filter banner ---------- */
+function filterCount() {
+  return (state.hiddenPkgs.size ? 1 : 0) + (state.tags.size ? 1 : 0)
+       + (state.q.trim() ? 1 : 0) + (state.seeds ? 0 : 1)
+       + (state.untestedOnly ? 1 : 0) + (state.xpOnly ? 1 : 0);
+}
+function syncBanner() {
+  const n = filterCount();
+  const bits = [];
+  if (state.hiddenPkgs.size) bits.push(`${state.hiddenPkgs.size} project${state.hiddenPkgs.size > 1 ? 's' : ''} hidden`);
+  if (state.tags.size) bits.push(`tags: ${[...state.tags].join(', ')}`);
+  if (state.q.trim()) bits.push(`search: "${state.q.trim()}"`);
+  if (!state.seeds) bits.push('seeds hidden');
+  if (state.untestedOnly) bits.push('untested only');
+  if (state.xpOnly) bits.push('cross-project only');
+  $('#fbanner-text').textContent = bits.join(' · ');
+  $('#fbanner').classList.toggle('on', n > 0);
+}
+function resetFilters() {
+  state.hiddenPkgs.clear(); state.tags.clear(); state.q = '';
+  state.seeds = true; state.untestedOnly = false; state.xpOnly = false;
+  syncControls(); render(); writeHash();
+  announce('Filters reset');
+}
+$('#fbanner-reset').onclick = resetFilters;
+
+/* ---------- export ---------- */
+function download(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function exportGraph(asPng) {
+  const L = state.layout;
+  if (!L || !L.width) return;
+  const cs = getComputedStyle(document.documentElement);
+  const W = L.width, H = L.height + 40;
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('width', W);
+  clone.setAttribute('height', H);
+  clone.setAttribute('viewBox', `0 -26 ${W} ${H}`);
+  clone.querySelector('#viewport').removeAttribute('transform');
+  const vars = ['--bg','--bg-2','--bg-3','--panel','--line','--line-2','--fg','--fg-2',
+                '--fg-3','--accent','--edge','--warn','--ok','--mono','--sans']
+    .map(v => `${v}:${cs.getPropertyValue(v).trim()}`).join(';');
+  const st = document.createElementNS(NS, 'style');
+  st.textContent = `svg{${vars};background:${cs.getPropertyValue('--bg').trim()}}`
+    + document.getElementById('page-style').textContent;
+  clone.insertBefore(st, clone.firstChild);
+  const xml = new XMLSerializer().serializeToString(clone);
+  if (!asPng) {
+    return download(URL.createObjectURL(
+      new Blob([xml], { type:'image/svg+xml;charset=utf-8' })), 'lineage.svg');
+  }
+  const img = new Image();
+  img.onload = () => {
+    const scale = 2, c = document.createElement('canvas');
+    c.width = W * scale; c.height = H * scale;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = cs.getPropertyValue('--bg').trim();
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0);
+    c.toBlob(b => download(URL.createObjectURL(b), 'lineage.png'));
+  };
+  img.onerror = () => announce('PNG export failed — the SVG download still works');
+  img.src = 'data:image/svg+xml;base64,'
+    + btoa(unescape(encodeURIComponent(xml)));
+}
+$('#btn-png').onclick = () => exportGraph(true);
+$('#btn-svg').onclick = () => exportGraph(false);
+$('#btn-link').onclick = e => {
+  writeHash();
+  navigator.clipboard?.writeText(location.href);
+  const b = e.currentTarget;
+  b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Link'; }, 1300);
+  announce('Link to this view copied');
+};
+
+/* ---------- mobile drawer ---------- */
+$('#btn-menu').onclick = () => {
+  const on = document.body.classList.toggle('drawer');
+  $('#btn-menu').setAttribute('aria-expanded', String(on));
+};
+$('#backdrop').onclick = () => {
+  document.body.classList.remove('drawer');
+  $('#btn-menu').setAttribute('aria-expanded', 'false');
+};
+
+/* ---------- sidebar ---------- */
+function buildLanes() {
+  const counts = {};
+  for (const n of NODES) counts[n.pkg] = (counts[n.pkg] || 0) + 1;
+  $('#lanes').innerHTML = PKGS.map(p => `
+    <div class="lane-row${state.hiddenPkgs.has(p.name) ? ' off' : ''}" data-pkg="${esc(p.name)}">
+      <span class="swatch" style="background:${p.color}"></span>
+      <span class="nm" title="${esc(p.name)}">${esc(p.label)}</span>
+      <span class="ct">${counts[p.name] || 0}</span>
+    </div>`).join('');
+}
+$('#lanes').addEventListener('click', e => {
+  const row = e.target.closest('[data-pkg]'); if (!row) return;
+  const p = row.dataset.pkg;
+  state.hiddenPkgs.has(p) ? state.hiddenPkgs.delete(p) : state.hiddenPkgs.add(p);
+  buildLanes(); render(true); writeHash();
+});
+$('#lane-all').onclick = () => { state.hiddenPkgs.clear(); buildLanes(); render(); writeHash(); };
+
+const ALL_TAGS = [...new Set(NODES.flatMap(n => n.tags))].sort();
+$('#tags').innerHTML = ALL_TAGS.map(t => `<button class="chip" data-tag="${esc(t)}">${esc(t)}</button>`).join('');
+$('#tags').addEventListener('click', e => {
+  const b = e.target.closest('[data-tag]'); if (!b) return;
+  const t = b.dataset.tag;
+  state.tags.has(t) ? state.tags.delete(t) : state.tags.add(t);
+  b.classList.toggle('on'); render(); writeHash();
+});
+$('#tag-clear').onclick = () => { state.tags.clear();
+  document.querySelectorAll('.chip.on').forEach(c => c.classList.remove('on'));
+  render(); writeHash(); };
+
+let qt;
+$('#q').addEventListener('input', e => {
+  state.q = e.target.value;
+  clearTimeout(qt);
+  qt = setTimeout(() => { render(); writeHash(); }, 140);
+});
+$('#t-seeds').onchange = e => { state.seeds = e.target.checked; render(); writeHash(); };
+$('#t-labels').onchange = e => { state.labels = e.target.checked; render(true); };
+$('#t-compact').onchange = e => { state.compact = e.target.checked; render(); writeHash(); };
+$('#t-untested').onchange = e => { state.untestedOnly = e.target.checked; render(); writeHash(); };
+$('#t-focus').onchange = e => { state.focusDim = e.target.checked; applyEmphasis(); };
+$('#btn-xponly').onclick = e => {
+  state.xpOnly = !state.xpOnly;
+  e.currentTarget.classList.toggle('on', state.xpOnly);
+  e.currentTarget.setAttribute('aria-pressed', String(state.xpOnly));
+  render(); writeHash();
+};
+$('#btn-view').onclick = () => {
+  state.view = state.view === 'models' ? 'projects' : 'models';
+  if (state.view === 'projects') select(null);
+  render(); writeHash(true);
+};
+$('#zoom-in').onclick = () => zoomBy(1.2);
+$('#zoom-out').onclick = () => zoomBy(1 / 1.2);
+$('#fit').onclick = () => fitView();
+$('#btn-theme').onclick = e => {
+  const light = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = light ? 'dark' : 'light';
+  e.currentTarget.textContent = light ? 'Light' : 'Dark';
+  writeHash();
+};
+addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== $('#q')) { e.preventDefault(); $('#q').focus(); }
+  if (e.key === 'Escape') {
+    $('#q').value = ''; state.q = '';
+    document.body.classList.remove('drawer');
+    select(null); render(); writeHash();
+  }
+  // arrow keys pan the canvas, so the graph is reachable without a drag gesture
+  if (document.activeElement === $('#q')) return;
+  const step = e.shiftKey ? 240 : 80;
+  const move = { ArrowLeft:[step, 0], ArrowRight:[-step, 0], ArrowUp:[0, step], ArrowDown:[0, -step] }[e.key];
+  if (move && document.activeElement !== $('#canvas')) {
+    e.preventDefault();
+    state.tf.x += move[0]; state.tf.y += move[1]; applyTf();
+  }
+  if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomBy(1.2); }
+  if (e.key === '-') { e.preventDefault(); zoomBy(1 / 1.2); }
+});
+addEventListener('resize', () => { clearTimeout(qt); qt = setTimeout(() => fitView('width'), 150); });
+
+/* ---------- cross-project modal ---------- */
+function buildModal() {
+  const pairs = {};
+  for (const [a, b] of DATA.edges) {
+    const s = byId[a], t = byId[b];
+    if (s.pkg === t.pkg) continue;
+    const k = s.pkg + '→' + t.pkg;
+    (pairs[k] = pairs[k] || { from:s.pkg, to:t.pkg, rows:[] }).rows.push([s, t]);
+  }
+  const list = Object.values(pairs).sort((x, y) => y.rows.length - x.rows.length);
+  $('#mbody').innerHTML = `<p class="scroll-hint">${DATA.stats.cross_edges} of ${DATA.edges.length}
+    dependency edges cross a project boundary, spanning ${list.length} project pairs.
+    These are the contracts your projects depend on — the ones worth <code>access</code> +
+    <code>contract.enforced</code>.</p>` + list.map(p => `
+    <div class="pair">
+      <h6><span class="swatch" style="background:${pkgColor[p.from]};width:9px;height:9px;border-radius:3px;display:inline-block"></span>
+        ${esc(p.from)} <span class="arrow">→</span>
+        <span class="swatch" style="background:${pkgColor[p.to]};width:9px;height:9px;border-radius:3px;display:inline-block"></span>
+        ${esc(p.to)} <span class="arrow">(${p.rows.length})</span></h6>
+      <table class="xp">${p.rows.map(([s, t]) =>
+        `<tr><td>${esc(s.name)}</td><td class="to">→ ${esc(t.name)}</td></tr>`).join('')}</table>
+    </div>`).join('');
+}
+$('#btn-xp').onclick = () => { buildModal(); $('#modal').classList.add('on'); };
+$('#modal-close').onclick = () => $('#modal').classList.remove('on');
+$('#modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') $('#modal').classList.remove('on');
+});
+
+/* ---------- boot ---------- */
+$('#subtitle').textContent = DATA.stats.subtitle;
+$('#stats').innerHTML = [
+  ['projects', PKGS.length], ['models', DATA.stats.models], ['seeds', DATA.stats.seeds],
+  ['tests', DATA.stats.tests], ['cross-project edges', DATA.stats.cross_edges],
+  ['inferred links', DATA.stats.inferred || 0]
+].map(([l, v]) => `<span class="stat"><b>${v}</b> ${l}</span>`).join('');
+
+// docs that quietly go stale are worse than docs that admit it
+(function staleness() {
+  const iso = DATA.stats.generated_at;
+  if (!iso) return;
+  const then = new Date(iso);
+  if (isNaN(then)) return;
+  const days = (Date.now() - then.getTime()) / 86400000;
+  const label = days < 1 ? 'built today'
+    : days < 2 ? 'built yesterday'
+    : days < 30 ? `built ${Math.round(days)} days ago`
+    : `built ${Math.round(days / 30)} months ago`;
+  const pill = document.createElement('span');
+  pill.className = 'age' + (days > 7 ? ' stale' : '');
+  pill.textContent = label;
+  pill.title = then.toUTCString();
+  if (days > 7) pill.setAttribute('aria-label', label + ' — this documentation may be out of date');
+  $('#stats').appendChild(pill);
+})();
+
+document.getElementById('lgx').style.borderTopColor = 'var(--fg-3)';
+readHash();
+render();
+if (state.sel) {
+  $('#main').classList.add('detail');
+  renderDetail(byId[state.sel]);
+  requestAnimationFrame(() => centerOn(state.sel));
+}
+</script>
+</body>
+</html>
