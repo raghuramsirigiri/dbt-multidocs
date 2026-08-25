@@ -5,28 +5,45 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dbt-multidocs"
 version = "0.1.0"
-description = "Combine several independent dbt projects into one self-contained lineage page."
+description = "Merge multiple dbt projects into one self-contained cross-project data lineage page - no warehouse connection, no dependencies."
 readme = "README.md"
+authors = [{ name = "Raghuram Sirigiri" }]
+maintainers = [{ name = "Raghuram Sirigiri" }]
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.9"
 dependencies = []
-keywords = ["dbt", "lineage", "documentation", "data-engineering", "dbt-mesh"]
+keywords = [
+    "dbt", "dbt-core", "dbt-docs", "dbt-mesh", "data-lineage", "lineage",
+    "cross-project-lineage", "data-catalog", "analytics-engineering",
+    "data-engineering", "documentation", "manifest", "elt", "data-governance",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Topic :: Documentation",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Database",
+    "Topic :: Documentation",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Software Development :: Documentation",
+    "Typing :: Typed",
 ]
 
 [project.urls]
-Homepage = "https://github.com/raghuramsirigiri/dbt-docs-repo"
-Documentation = "https://github.com/raghuramsirigiri/dbt-docs-repo/tree/main/docs"
-Issues = "https://github.com/raghuramsirigiri/dbt-docs-repo/issues"
-Changelog = "https://github.com/raghuramsirigiri/dbt-docs-repo/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/raghuramsirigiri/dbt-multidocs"
+Source = "https://github.com/raghuramsirigiri/dbt-multidocs"
+Documentation = "https://github.com/raghuramsirigiri/dbt-multidocs/tree/main/docs"
+Issues = "https://github.com/raghuramsirigiri/dbt-multidocs/issues"
+Changelog = "https://github.com/raghuramsirigiri/dbt-multidocs/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]

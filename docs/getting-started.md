@@ -5,8 +5,8 @@
 Python 3.9 or newer. No other runtime requirements.
 
 ```bash
-git clone https://github.com/raghuramsirigiri/dbt-docs-repo.git
-cd dbt-docs-repo
+git clone https://github.com/raghuramsirigiri/dbt-multidocs.git
+cd dbt-multidocs
 python -m venv .venv
 .venv/bin/pip install -e ".[dev]"        # Windows: .venv\Scripts\pip install -e ".[dev]"
 ```

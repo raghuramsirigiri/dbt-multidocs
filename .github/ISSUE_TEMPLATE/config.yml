@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Question or usage help
-    url: https://github.com/raghuramsirigiri/dbt-docs-repo/discussions
+    url: https://github.com/raghuramsirigiri/dbt-multidocs/discussions
     about: Ask here if you are not sure whether something is a bug.

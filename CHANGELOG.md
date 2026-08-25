@@ -80,5 +80,5 @@ First release.
   themes. Inferred edges render dotted with their own legend entry so a guessed
   link is never mistaken for a declared one.
 
-[Unreleased]: https://github.com/raghuramsirigiri/dbt-docs-repo/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/raghuramsirigiri/dbt-docs-repo/releases/tag/v0.1.0
+[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/raghuramsirigiri/dbt-multidocs/releases/tag/v0.1.0

@@ -1,13 +1,21 @@
 # dbt-multidocs
 
-[![CI](https://github.com/raghuramsirigiri/dbt-docs-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/raghuramsirigiri/dbt-docs-repo/actions/workflows/ci.yml)
+[![CI](https://github.com/raghuramsirigiri/dbt-multidocs/actions/workflows/ci.yml/badge.svg)](https://github.com/raghuramsirigiri/dbt-multidocs/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/runtime%20deps-none-brightgreen)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Point it at any number of dbt projects — in unrelated directories, on unrelated
-repos — and get **one self-contained lineage page**: a single HTML file, no
-network calls, no JS dependencies, no dbt install, no warehouse connection.
+**dbt-multidocs is a command-line tool that merges several independent dbt
+projects into a single, self-contained data-lineage page.** Point it at any
+number of dbt projects — in unrelated directories, on unrelated repos — and it
+produces one HTML file with the whole graph: no network calls, no JavaScript
+dependencies, no dbt installation, and no warehouse connection.
+
+It is built for the case dbt itself does not cover: **cross-project lineage when
+the projects do not share a manifest.** If your dbt projects live in separate
+repositories and are linked only by `source()` over a shared warehouse,
+`dbt docs generate` shows them as disconnected islands. dbt-multidocs
+reconnects them.
 
 ```bash
 dbt-multidocs build \
@@ -27,7 +35,7 @@ graph    : 25 nodes / 30 edges across 3 projects
            7 cross-project edges (11 inferred from source() relations)
 ```
 
-## What it solves
+## How do you get lineage across multiple dbt projects?
 
 dbt gives you cross-project lineage only when the projects share a manifest —
 dbt Mesh with `dependencies.yml` and two-argument `ref()`. Plenty of real setups
@@ -43,7 +51,33 @@ still used where they exist, so dbt Mesh projects work too.
 Inferred links are drawn dotted and labelled in the legend, so you can always
 tell a link the tool guessed from one dbt declared.
 
-## Install
+### How it compares
+
+| | `dbt docs generate` | dbt Mesh (`ref()` across projects) | dbt-multidocs |
+|---|---|---|---|
+| Projects per page | one | many | many |
+| Needs a shared manifest | — | yes | **no** |
+| Needs `dependencies.yml` | — | yes | **no** |
+| Links projects joined only by `source()` | no | no | **yes** |
+| Needs a warehouse connection | yes | yes | **no** |
+| Needs dbt installed | yes | yes | **no** |
+| Output | multi-file site | multi-file site | **one HTML file** |
+| Runtime dependencies | several | several | **none** |
+
+dbt-multidocs does not replace `dbt docs generate` — it reads the artifacts that
+command produces. Run dbt docs first, then point dbt-multidocs at the results.
+
+### When you should not use this
+
+- **One dbt project only.** `dbt docs generate` already does this well; there is
+  nothing for dbt-multidocs to merge.
+- **You want column-level lineage.** Columns, types and test coverage are shown
+  per model, but there are no column-to-column edges.
+- **You want a live catalog with freshness, run history or ownership
+  workflows.** This is a static page built from artifacts. Look at DataHub,
+  OpenMetadata, Atlan or dbt Cloud instead.
+
+## How do you install dbt-multidocs?
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -e ".[dev]"    # Windows: .venv\Scripts\pip
@@ -51,7 +85,7 @@ python -m venv .venv && .venv/bin/pip install -e ".[dev]"    # Windows: .venv\Sc
 
 No runtime dependencies. Python 3.9+.
 
-## Input
+## What input does it need?
 
 Artifacts only — `target/manifest.json` plus, optionally, `target/catalog.json`.
 Run `dbt docs generate` in each project first. Nothing here runs dbt, opens a
@@ -63,7 +97,7 @@ connection, or reads `profiles.yml`.
 A missing catalog is a warning (column data types come up blank); a missing
 manifest is an error that names the project and the command to fix it.
 
-## Finding projects
+## How do you point it at your dbt projects?
 
 ```bash
 dbt-multidocs discover --search-root /repos          # what's out there?
@@ -75,7 +109,7 @@ change), skipping `dbt_packages/`, `target/`, `.venv/`, `node_modules/` and the
 like. Repeat it for several unrelated roots. Explicit `--project` paths always
 win. With neither, the current directory is swept.
 
-## Config file
+## How do you configure it?
 
 Only needed for labels, lane ordering, or manual links.
 
@@ -115,7 +149,7 @@ swimlane row. JSON config files work too.
 | `--compress auto\|always\|never` | gzip the embedded payload (default: auto, above ~1 MB) |
 | `--json FILE` | also dump the graph payload |
 
-## The page
+## What does the generated page look like?
 
 Swimlane per project × dependency depth, plus: search across names, descriptions,
 tags and column names; per-project and per-tag filters; a project-level rollup
@@ -129,6 +163,51 @@ cheaply as a small one. Flicks carry momentum and rubber-band at the edges;
 programmatic moves (Fit, jumping to a selection) spring from wherever the canvas
 currently is and can be grabbed mid-flight. `prefers-reduced-motion` is
 honoured.
+
+## Frequently asked questions
+
+### Does dbt-multidocs require dbt Mesh?
+
+No. dbt Mesh projects work — declared cross-project `ref()` edges are used where
+they exist — but dbt-multidocs is specifically built for projects that are *not*
+on Mesh and share no manifest. It needs no `dependencies.yml` and no
+two-argument `ref()`.
+
+### Does it connect to my data warehouse?
+
+No. It reads `target/manifest.json` and `target/catalog.json` only. It never runs
+dbt, never opens a database connection, and never reads `profiles.yml`. That
+makes it safe to run in CI and on machines with no warehouse credentials.
+
+### How does it know two projects are connected?
+
+It matches normalized warehouse relations. Every model, seed and snapshot is
+indexed by `(database, schema, identifier)`, and every `source()` is resolved to
+the same key. When a downstream project's source names the exact relation an
+upstream project builds, that is an edge. Ambiguous matches — one relation
+produced by two models — are reported and skipped rather than guessed at.
+
+### Which data warehouses does it support?
+
+All of them. It reads dbt artifacts rather than the warehouse, so Snowflake,
+BigQuery, Databricks, Redshift, Postgres and DuckDB all work identically.
+
+### How many dbt models can it handle?
+
+Tested to 3,000 models across 12 projects (5,750 nodes, 9,700 edges). Only the
+part of the graph inside the viewport is rendered, so panning and filtering cost
+the same at 6,000 nodes as at 400. Large graphs are gzipped inside the page: that
+5,750-node example is a 552 KB file.
+
+### Can I host the output on GitHub Pages?
+
+Yes. The output is one self-contained HTML file with no external requests, so
+GitHub Pages, S3, Netlify or any static host serves it as-is. It also opens
+directly from `file://`.
+
+### Is it free and open source?
+
+Yes — MIT licensed, with no runtime dependencies and no paid tier.
 
 ## Documentation
 
@@ -163,6 +242,11 @@ parent directory or the working directory**.
 
 MIT — see [LICENSE](LICENSE). The generated lineage page embeds this project's
 HTML template, so pages you produce carry no obligations of their own.
+
+## Maintainer
+
+Built and maintained by [Raghuram Sirigiri](https://github.com/raghuramsirigiri).
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
