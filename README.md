@@ -3,6 +3,7 @@
 [![CI](https://github.com/raghuramsirigiri/dbt-multidocs/actions/workflows/ci.yml/badge.svg)](https://github.com/raghuramsirigiri/dbt-multidocs/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/runtime%20deps-none-brightgreen)
+[![PyPI](https://img.shields.io/pypi/v/dbt-multidocs)](https://pypi.org/project/dbt-multidocs/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **dbt-multidocs is a command-line tool that merges several independent dbt
@@ -82,24 +83,26 @@ command produces. Run dbt docs first, then point dbt-multidocs at the results.
 
 ## How do you install dbt-multidocs?
 
-Python 3.9 or newer. There are no runtime dependencies.
+```bash
+pip install dbt-multidocs
+```
+
+Python 3.9 or newer. There are no runtime dependencies, so nothing else is
+pulled in. That puts a `dbt-multidocs` command on your PATH.
+
+To work on the project instead, clone it and install the editable dev extra:
 
 ```bash
 git clone https://github.com/raghuramsirigiri/dbt-multidocs.git
 cd dbt-multidocs
 python -m venv .venv
-.venv/bin/pip install .          # Windows: .venv\Scripts\pip install .
+.venv/bin/pip install -e ".[dev]"    # Windows: .venv\Scripts\pip install -e ".[dev]"
 ```
 
-That puts a `dbt-multidocs` command on your PATH. For a development checkout —
-editable, with the test dependencies — use `pip install -e ".[dev]"` instead.
-
-> Not yet on PyPI. Until it is published, install from source as above.
-
 Building from source needs `setuptools >= 77` for the PEP 639 license metadata.
-`pip` fetches that automatically; if you are installing offline or with
+`pip` fetches that automatically; if you install offline or with
 `--no-build-isolation`, upgrade setuptools first, or you will see
-`project.license must be valid exactly by one definition`. Installing from a
+`project.license must be valid exactly by one definition`. Installing the
 published wheel needs no build step at all.
 
 ## What input does it need?

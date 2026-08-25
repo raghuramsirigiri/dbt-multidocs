@@ -5,6 +5,12 @@
 Python 3.9 or newer. No other runtime requirements.
 
 ```bash
+pip install dbt-multidocs
+```
+
+To work on the project instead of just using it, clone and install the dev extra:
+
+```bash
 git clone https://github.com/raghuramsirigiri/dbt-multidocs.git
 cd dbt-multidocs
 python -m venv .venv

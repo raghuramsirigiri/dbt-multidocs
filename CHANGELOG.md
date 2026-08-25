@@ -42,9 +42,10 @@ All notable changes to this project are documented here. Format follows
 - The canvas rect is cached instead of measured inside the per-frame cull check,
   where `getBoundingClientRect()` forced a synchronous layout costing 13 ms.
 
-## [0.1.0]
+## [0.1.0] - 2026-08-25
 
-First release.
+First release, published to PyPI as
+[`dbt-multidocs`](https://pypi.org/project/dbt-multidocs/).
 
 ### Added
 
