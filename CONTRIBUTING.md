@@ -89,3 +89,8 @@ between `graph.py` and the template.
 2. Bump `version` in `pyproject.toml` and `__version__` in
    `src/dbt_multidocs/__init__.py` — they must match.
 3. Tag `vX.Y.Z`. CI builds the wheel and checks the template is inside it.
+
+## License
+
+By contributing you agree that your contributions are licensed under the
+[MIT License](LICENSE) that covers this project.

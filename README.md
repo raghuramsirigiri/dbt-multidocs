@@ -3,6 +3,7 @@
 [![CI](https://github.com/raghuramsirigiri/dbt-docs-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/raghuramsirigiri/dbt-docs-repo/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![Dependencies](https://img.shields.io/badge/runtime%20deps-none-brightgreen)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Point it at any number of dbt projects — in unrelated directories, on unrelated
 repos — and get **one self-contained lineage page**: a single HTML file, no
@@ -149,6 +150,11 @@ fixtures in the repository. The suite runs in under a second.
 Changes are held to the design constraints above; the ones most likely to catch
 you out are **no runtime dependencies** and **nothing derived from a common
 parent directory or the working directory**.
+
+## License
+
+MIT — see [LICENSE](LICENSE). The generated lineage page embeds this project's
+HTML template, so pages you produce carry no obligations of their own.
 
 ## Credits
 
