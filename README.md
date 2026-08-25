@@ -18,6 +18,10 @@ repositories and are linked only by `source()` over a shared warehouse,
 `dbt docs generate` shows them as disconnected islands. dbt-multidocs
 reconnects them.
 
+**[See a live example page](https://raghuramsirigiri.github.io/dbt-multidocs/lineage.html)** — three independent dbt
+projects stitched into one graph, or read the
+**[documentation](https://raghuramsirigiri.github.io/dbt-multidocs/)**.
+
 ```bash
 dbt-multidocs build \
   --project /repos/dbt_staging \
@@ -243,8 +247,12 @@ Yes — MIT licensed, with no runtime dependencies and no paid tier.
 | [Architecture](docs/architecture.md) | the pipeline, the payload shape, library use |
 | [Troubleshooting](docs/troubleshooting.md) | every warning, and what to do about it |
 
-A rendered example page — a real build of three independent dbt projects — is at
-[docs/lineage.html](docs/lineage.html).
+Documentation is also published at **[raghuramsirigiri.github.io/dbt-multidocs](https://raghuramsirigiri.github.io/dbt-multidocs/)**.
+
+A rendered example page — a real build of three independent dbt projects, with
+working search, filters and the cross-project report — is live at
+**[raghuramsirigiri.github.io/dbt-multidocs/lineage.html](https://raghuramsirigiri.github.io/dbt-multidocs/lineage.html)**
+(source: [docs/lineage.html](docs/lineage.html)).
 
 ## Contributing
 

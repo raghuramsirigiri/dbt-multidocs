@@ -9,9 +9,9 @@ One lineage page across dbt projects that don't share a manifest.
 - **[Architecture](architecture.md)** — the pipeline and the payload shape
 - **[Troubleshooting](troubleshooting.md)** — every warning, and what to do about it
 
-There is a rendered example page in this directory: [lineage.html](lineage.html).
-It is a real build of three independent dbt projects — open it and everything
-described in these docs is in front of you.
+There is a rendered example page here: **[lineage.html](lineage.html)** — a real
+build of three independent dbt projects. Open it and everything described in
+these docs is in front of you.
 
 ## The short version
 
@@ -25,10 +25,10 @@ matching normalized warehouse relations — `(database, schema, identifier)` —
 between one project's models and another's sources.
 
 ```bash
-pip install -e .
+pip install dbt-multidocs
 dbt-multidocs build --project /repos/dbt_staging \
                     --project /repos/dbt_core \
-                    --project D:\other\dbt_analytics \
+                    --project /mnt/data/dbt_analytics \
                     --out docs/lineage.html
 ```
 
