@@ -6,6 +6,17 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-08-25
+
+Documentation only. No code changes.
+
+### Added
+
+- A screenshot of the generated lineage page, captured from the live published
+  example, at the top of the README and the documentation index. It shows three
+  independent dbt projects in separate swimlanes joined by inferred edges, which
+  is the point of the tool in one picture.
+
 ## [0.1.2] - 2026-08-25
 
 Packaging metadata only. No code changes.
@@ -109,7 +120,8 @@ First release, published to PyPI as
   themes. Inferred edges render dotted with their own legend entry so a guessed
   link is never mistaken for a declared one.
 
-[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/raghuramsirigiri/dbt-multidocs/releases/tag/v0.1.0
