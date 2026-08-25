@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dbt-multidocs"
-version = "0.1.1"
+version = "0.1.2"
 description = "Merge multiple dbt projects into one self-contained cross-project data lineage page - no warehouse connection, no dependencies."
 readme = "README.md"
 authors = [{ name = "Raghuram Sirigiri" }]
@@ -39,9 +39,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/raghuramsirigiri/dbt-multidocs"
+Homepage = "https://raghuramsirigiri.github.io/dbt-multidocs/"
+Documentation = "https://raghuramsirigiri.github.io/dbt-multidocs/"
+Demo = "https://raghuramsirigiri.github.io/dbt-multidocs/lineage.html"
 Source = "https://github.com/raghuramsirigiri/dbt-multidocs"
-Documentation = "https://github.com/raghuramsirigiri/dbt-multidocs/tree/main/docs"
 Issues = "https://github.com/raghuramsirigiri/dbt-multidocs/issues"
 Changelog = "https://github.com/raghuramsirigiri/dbt-multidocs/blob/main/CHANGELOG.md"
 

@@ -6,6 +6,17 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-08-25
+
+Packaging metadata only. No code changes.
+
+### Fixed
+
+- The `Documentation` link on the PyPI page pointed at the GitHub folder listing
+  of `docs/`, which is a file browser rather than the documentation. It now
+  points at the published documentation site, and a `Demo` link goes straight to
+  the live example lineage page.
+
 ## [0.1.1] - 2026-08-25
 
 Documentation only. No code changes: the installed package behaves exactly as
@@ -98,6 +109,7 @@ First release, published to PyPI as
   themes. Inferred edges render dotted with their own legend entry so a guessed
   link is never mistaken for a declared one.
 
-[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/raghuramsirigiri/dbt-multidocs/releases/tag/v0.1.0
