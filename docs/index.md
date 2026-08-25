@@ -9,6 +9,8 @@ One lineage page across dbt projects that don't share a manifest.
 - **[Architecture](architecture.md)** — the pipeline and the payload shape
 - **[Troubleshooting](troubleshooting.md)** — every warning, and what to do about it
 
+[![Cross-project dbt lineage across three projects](lineage-example.png)](lineage.html)
+
 There is a rendered example page here: **[lineage.html](lineage.html)** — a real
 build of three independent dbt projects. Open it and everything described in
 these docs is in front of you.

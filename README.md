@@ -18,8 +18,12 @@ repositories and are linked only by `source()` over a shared warehouse,
 `dbt docs generate` shows them as disconnected islands. dbt-multidocs
 reconnects them.
 
-**[See a live example page](https://raghuramsirigiri.github.io/dbt-multidocs/lineage.html)** — three independent dbt
-projects stitched into one graph, or read the
+[![Cross-project dbt lineage: staging, core and analytics projects in separate swimlanes, joined by dotted inferred edges](https://raw.githubusercontent.com/raghuramsirigiri/dbt-multidocs/main/docs/lineage-example.png)](https://raghuramsirigiri.github.io/dbt-multidocs/lineage.html)
+
+*Three independent dbt projects — separate repos, separate manifests, no
+cross-project `ref()`. The dotted edges are the links dbt-multidocs inferred by
+matching warehouse relations.*
+**[Open the interactive version](https://raghuramsirigiri.github.io/dbt-multidocs/lineage.html)** or read the
 **[documentation](https://raghuramsirigiri.github.io/dbt-multidocs/)**.
 
 ```bash
