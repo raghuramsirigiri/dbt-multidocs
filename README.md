@@ -21,15 +21,18 @@ reconnects them.
 dbt-multidocs build \
   --project /repos/dbt_staging \
   --project /repos/dbt_core \
-  --project D:\other\dbt_analytics \
+  --project /mnt/data/dbt_analytics \
   --out docs/lineage.html
 ```
+
+The projects need no common parent — on Windows, `--project D:\repos\dbt_core`
+works the same way.
 
 ```
   dbt_staging                12 nodes   .../dbt_staging/target/manifest.json
   dbt_core                    7 nodes   .../dbt_core/target/manifest.json
   dbt_analytics               6 nodes   .../dbt_analytics/target/manifest.json
-written  : .../docs/lineage.html  (143 KB)
+written  : .../docs/lineage.html  (153 KB)
 graph    : 25 nodes / 30 edges across 3 projects
            10 models, 4 seeds, 11 sources, 61 tests
            7 cross-project edges (11 inferred from source() relations)
@@ -59,7 +62,7 @@ tell a link the tool guessed from one dbt declared.
 | Needs a shared manifest | — | yes | **no** |
 | Needs `dependencies.yml` | — | yes | **no** |
 | Links projects joined only by `source()` | no | no | **yes** |
-| Needs a warehouse connection | yes | yes | **no** |
+| Needs a warehouse connection | yes, for the catalog | yes, for the catalog | **no** |
 | Needs dbt installed | yes | yes | **no** |
 | Output | multi-file site | multi-file site | **one HTML file** |
 | Runtime dependencies | several | several | **none** |
@@ -79,11 +82,25 @@ command produces. Run dbt docs first, then point dbt-multidocs at the results.
 
 ## How do you install dbt-multidocs?
 
+Python 3.9 or newer. There are no runtime dependencies.
+
 ```bash
-python -m venv .venv && .venv/bin/pip install -e ".[dev]"    # Windows: .venv\Scripts\pip
+git clone https://github.com/raghuramsirigiri/dbt-multidocs.git
+cd dbt-multidocs
+python -m venv .venv
+.venv/bin/pip install .          # Windows: .venv\Scripts\pip install .
 ```
 
-No runtime dependencies. Python 3.9+.
+That puts a `dbt-multidocs` command on your PATH. For a development checkout —
+editable, with the test dependencies — use `pip install -e ".[dev]"` instead.
+
+> Not yet on PyPI. Until it is published, install from source as above.
+
+Building from source needs `setuptools >= 77` for the PEP 639 license metadata.
+`pip` fetches that automatically; if you are installing offline or with
+`--no-build-isolation`, upgrade setuptools first, or you will see
+`project.license must be valid exactly by one definition`. Installing from a
+published wheel needs no build step at all.
 
 ## What input does it need?
 
@@ -144,7 +161,7 @@ swimlane row. JSON config files work too.
 | `--title TEXT` | page heading |
 | `--template FILE` | replace the packaged HTML template |
 | `--no-stitch` | declared `ref()` edges only, no inference |
-| `--stitch-scope cross` | don't link a project's own seeds to its own sources |
+| `--stitch-scope {all,cross}` | `cross` skips a project's own seed-to-source links (default `all`) |
 | `--strict` | exit 2 if anything warned |
 | `--compress auto\|always\|never` | gzip the embedded payload (default: auto, above ~1 MB) |
 | `--json FILE` | also dump the graph payload |
@@ -189,8 +206,11 @@ produced by two models — are reported and skipped rather than guessed at.
 
 ### Which data warehouses does it support?
 
-All of them. It reads dbt artifacts rather than the warehouse, so Snowflake,
-BigQuery, Databricks, Redshift, Postgres and DuckDB all work identically.
+Any adapter, in principle: it reads dbt artifacts rather than the warehouse, and
+every adapter records the same `relation_name` field that the linking depends on.
+Snowflake, BigQuery, Databricks, Redshift and Postgres should all behave
+identically. Development and testing have been on DuckDB, so if you hit an
+adapter-specific problem it is worth an issue.
 
 ### How many dbt models can it handle?
 
@@ -250,6 +270,7 @@ Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
-The page's HTML/JS and the SQL pretty-printer are carried over from the
-`dbt-lineage-multi-project` prototype; this package generalizes the data layer
-around them to N independent projects.
+The page's HTML/JS and the SQL pretty-printer began life in an earlier,
+unpublished prototype of mine that rendered a single merged dbt manifest. This
+package keeps that rendering layer and generalizes the data layer around it to N
+independent projects.

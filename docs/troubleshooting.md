@@ -134,6 +134,19 @@ If it is slow anyway, it's worth an issue — include the node/edge counts from
 the build summary. Meanwhile the project and tag filters, the search box and
 **Cross-project only** all cut the graph down.
 
+### `project.license must be valid exactly by one definition`
+
+A source install used a setuptools older than 77, which predates the PEP 639
+license format this project declares. A fresh virtualenv bundles setuptools
+65.x, so this bites when you install offline or pass `--no-build-isolation`.
+
+```bash
+pip install --upgrade "setuptools>=77"
+```
+
+With normal build isolation, pip fetches the right setuptools itself, and a
+published wheel needs no build step at all.
+
 ## Getting help
 
 Open an issue with the command you ran and the full output including warnings.
