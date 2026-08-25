@@ -114,8 +114,8 @@ def test_inferred_edges_are_kept_separate_and_counted(two_repos):
 def test_payload_cannot_close_the_host_script_tag():
     m = model("p", "a", "s")
     m["raw_code"] = "select 1 -- </script><script>alert(1)</script>"
-    html = render.render(graph.build(merge.merge([_loaded("p", manifest("p", nodes=[m]))])),
-                         "T")
+    html, _, _, _ = render.render(
+        graph.build(merge.merge([_loaded("p", manifest("p", nodes=[m]))])), "T")
     body = html.split('id="graph-data"', 1)[1].split("</script>", 1)[0]
     assert "</script" not in body
     assert "<\\/script" in body

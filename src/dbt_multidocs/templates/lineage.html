@@ -36,6 +36,10 @@
 }
 .skip:focus{top:0}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Feedback belongs on the press, not the release: the node reacts the instant
+   the pointer goes down, before the click has even been decided. */
+.node:active .body{filter:brightness(1.35)}
+.node{cursor:pointer}
 html,body{height:100%;margin:0}
 body{
   background:var(--bg);color:var(--fg);font-family:var(--sans);
@@ -451,10 +455,32 @@ table.xp td.to{color:var(--fg)}
   <div class="mbody" id="mbody"></div>
 </div></div>
 
-<script id="graph-data" type="application/json">__GRAPH_DATA__</script>
+<script id="graph-data" type="__DATA_TYPE__">__GRAPH_DATA__</script>
 <script>
 "use strict";
-const DATA = JSON.parse(document.getElementById('graph-data').textContent);
+/* The payload is inlined as plain JSON, or as gzip+base64 once it gets big
+   enough that raw JSON would dominate the file — a 3000-model graph goes from
+   8.8MB to 0.46MB. Decoding gzip is async, so the page boots from a promise. */
+async function readPayload() {
+  const node = document.getElementById('graph-data');
+  const text = node.textContent;
+  if (node.type !== 'application/gzip-base64') return JSON.parse(text);
+  if (typeof DecompressionStream !== 'function')
+    throw new Error('This page stores its data compressed and needs a browser with '
+      + 'DecompressionStream (Chrome 80+, Firefox 113+, Safari 16.4+). '
+      + 'Rebuild with --compress never for a plain-JSON page.');
+  const bytes = Uint8Array.from(atob(text.trim()), c => c.charCodeAt(0));
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return JSON.parse(await new Response(stream).text());
+}
+
+readPayload().then(boot).catch(err => {
+  const box = document.getElementById('empty');
+  if (box) { box.style.display = 'grid'; box.textContent = err.message; }
+  console.error(err);
+});
+
+function boot(DATA) {
 const NODES = DATA.nodes, PKGS = DATA.packages;
 const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
 const pkgColor = Object.fromEntries(PKGS.map(p => [p.name, p.color]));
@@ -468,7 +494,13 @@ function applyDensity() {
   COL_W = NW + (state.compact ? 64 : COL_GAP);
   ROW_H = NH + (state.compact ? 8 : ROW_GAP);
 }
-const SVG_NODE_CEILING = 300;   // past this, SVG layout stops being interactive
+// Only what is inside the viewport (plus this much graph-space padding) is
+// built into the DOM. Panning within the padding costs nothing; leaving it
+// repaints. Without this a 3000-model graph puts ~78k SVG elements on the page
+// and one pan frame costs ~480ms.
+const CULL_PAD = 700;
+// Edge casings are the priciest part of a frame and the least missed when dense.
+const CASING_CEILING = 900;
 
 /* ---------- state ---------- */
 const state = {
@@ -476,11 +508,21 @@ const state = {
   seeds: true, labels: true, untestedOnly: false, xpOnly: false, focusDim: true,
   compact: false, sel: null, hover: null, focusId: null,
   view: 'models', sqlMode: 'source',
-  layout: null, tf: {x:0, y:0, k:1}
+  layout: null, tf: {x:0, y:0, k:1},
+  painted: null, paintedK: 0, paintQueued: false
 };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
 
 const $ = s => document.querySelector(s);
 const svg = $('#svg'), viewport = $('#viewport');
+// getBoundingClientRect() forces layout; the canvas only moves when the window
+// or the surrounding chrome resizes, so measure it then and cache it.
+let _rect = null;
+const canvasRect = () => _rect || (_rect = svg.getBoundingClientRect());
+const invalidateRect = () => { _rect = null; };
+addEventListener('resize', () => { invalidateRect(); queuePaint(); });
+if (window.ResizeObserver) new ResizeObserver(invalidateRect).observe(svg);
 const NS = 'http://www.w3.org/2000/svg';
 const el = (t, a = {}) => { const e = document.createElementNS(NS, t);
   for (const k in a) e.setAttribute(k, a[k]); return e; };
@@ -577,8 +619,8 @@ function render(keepView) {
   syncView();
   if (state.view === 'projects') return renderProjects(keepView);
   const L = state.layout = layout();
-  const gb = $('#g-bands'), gh = $('#g-halos'), ge = $('#g-edges'), gn = $('#g-nodes');
-  gb.textContent = gh.textContent = ge.textContent = gn.textContent = '';
+  const gb = $('#g-bands');
+  gb.textContent = '';
   $('#empty').style.display = L.nodes.length ? 'none' : 'grid';
 
   // depth column rules + labels
@@ -599,6 +641,61 @@ function render(keepView) {
     gb.appendChild(t);
   });
 
+  paintGraph(true);
+  announce();
+  syncBanner();
+  if (!keepView) requestAnimationFrame(() => fitView('width'));
+}
+
+/* ---------- viewport culling ---------------------------------------------- */
+function viewRect(pad) {
+  const r = canvasRect(), k = state.tf.k || 1;
+  return { x:(-state.tf.x - pad) / k, y:(-state.tf.y - pad) / k,
+           w:(r.width + 2 * pad) / k, h:(r.height + 2 * pad) / k };
+}
+const covers = (outer, inner) =>
+  inner.x >= outer.x && inner.y >= outer.y &&
+  inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
+
+// Panning and zooming ask for a repaint at most once per frame.
+function queuePaint() {
+  if (state.paintQueued) return;
+  state.paintQueued = true;
+  requestAnimationFrame(() => { state.paintQueued = false; paintGraph(false); });
+}
+
+function paintGraph(force) {
+  const L = state.layout;
+  if (!L || state.view === 'projects') return;
+  // Still inside the painted margin at the same zoom? Nothing to do — this is
+  // the common case mid-drag, and it has to cost nothing.
+  if (!force && state.painted && state.paintedK === state.tf.k
+      && covers(state.painted, viewRect(0))) return;
+
+  const area = viewRect(CULL_PAD);
+  const ax2 = area.x + area.w, ay2 = area.y + area.h;
+  const gh = $('#g-halos'), ge = $('#g-edges'), gn = $('#g-nodes');
+  gh.textContent = ge.textContent = gn.textContent = '';
+
+  const shown = [];
+  for (const n of L.nodes)
+    if (n._x <= ax2 && n._x + NW >= area.x && n._y <= ay2 && n._y + NH >= area.y) shown.push(n);
+  const onScreen = new Set(shown.map(n => n.id));
+
+  const keepEdge = new Set();
+  for (const [a, b] of L.edges) {
+    const u = byId[a], v = byId[b];
+    if (u._x === undefined || v._x === undefined) continue;
+    if (!onScreen.has(a) && !onScreen.has(b)) {
+      // neither end is on screen; keep it only if the run crosses the viewport
+      const x1 = Math.min(u._x, v._x), x2 = Math.max(u._x + NW, v._x + NW);
+      const y1 = Math.min(u._y, v._y), y2 = Math.max(u._y + NH, v._y + NH);
+      if (x2 < area.x || x1 > ax2 || y2 < area.y || y1 > ay2) continue;
+    }
+    keepEdge.add(a + '\u0000' + b);
+  }
+  const casings = keepEdge.size + shown.length <= CASING_CEILING;
+
   // edges — drawn twice: a background-coloured casing, then the line itself,
   // so crossings read as over/under instead of a woven mesh
   state.els = { edges: [], nodes: new Map() };
@@ -614,6 +711,7 @@ function render(keepView) {
     const s = byId[a], t = byId[b];
     const oi = outSeen[a] = (outSeen[a] === undefined ? 0 : outSeen[a] + 1);
     const ii = inSeen[b] = (inSeen[b] === undefined ? 0 : inSeen[b] + 1);
+    if (!keepEdge.has(a + '\u0000' + b)) continue;
     const fanOut = (oi - (outIdx[a] - 1) / 2) * Math.min(7, 22 / outIdx[a]);
     const fanIn = (ii - (inIdx[b] - 1) / 2) * Math.min(7, 22 / inIdx[b]);
     const x1 = s._x + NW, y1 = s._y + NH / 2 + fanOut;
@@ -623,7 +721,7 @@ function render(keepView) {
     const inferred = INFERRED.has(a + '\u0000' + b);
     const d = `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
 
-    const halo = el('path', { d, class:'edge-halo' });
+    const halo = casings ? el('path', { d, class:'edge-halo' }) : null;
     const p = el('path', {
       d,
       class:'edge' + (cross ? ' cross' : '') + (inferred ? ' inferred' : ''),
@@ -637,13 +735,13 @@ function render(keepView) {
     p.appendChild(tip);
 
     state.els.edges.push({ a, b, path:p, halo });
-    gh.appendChild(halo);
+    if (halo) gh.appendChild(halo);
     ge.appendChild(p);
   }
 
   // nodes
   let idx = 0;
-  for (const n of L.nodes) {
+  for (const n of shown) {
     idx++;
     const g = el('g', { class:'node', transform:`translate(${n._x},${n._y})` });
     if (n._ghost) g.classList.add('ghost');
@@ -695,17 +793,12 @@ function render(keepView) {
     });
     gn.appendChild(g);
   }
+  state.painted = area;
+  state.paintedK = state.tf.k;
   applyEmphasis();
   rove();
-  announce();
-  syncBanner();
-  if (L.nodes.length > SVG_NODE_CEILING) {
-    $('#fbanner-text').textContent =
-      `${L.nodes.length} nodes on screen — filter down for smooth interaction`;
-    $('#fbanner').classList.add('on');
-  }
-  if (!keepView) requestAnimationFrame(() => fitView('width'));
 }
+
 const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
 
 // Selection and hover only change emphasis, never layout. Repainting classes on
@@ -775,14 +868,15 @@ function announce(msg) {
 function rove() {
   const els = state.els;
   if (!els || !els.nodes.size) { $('#canvas').removeAttribute('aria-activedescendant'); return; }
-  if (!state.focusId || !els.nodes.has(state.focusId)) {
-    state.focusId = els.nodes.keys().next().value;
-  }
+  // the focused node may simply be scrolled out of the painted window
+  const known = state.layout && state.layout.nodes.some(n => n.id === state.focusId);
+  if (!state.focusId || !known) state.focusId = els.nodes.keys().next().value;
   const canvas = $('#canvas');
   const focused = document.activeElement === canvas;
   for (const [id, g] of els.nodes) g.classList.toggle('kbdfocus', focused && id === state.focusId);
   const g = els.nodes.get(state.focusId);
   if (g && g.id) canvas.setAttribute('aria-activedescendant', g.id);
+  else canvas.removeAttribute('aria-activedescendant');
 }
 
 function moveFocus(dx, dy) {
@@ -954,26 +1048,118 @@ function renderProjects(keepView) {
 }
 
 /* ---------- pan / zoom ---------- */
+/* ---------- fluid view transform --------------------------------------------
+   One rAF loop owns every animated view change. Pointer input cancels it, so a
+   canvas in motion can always be grabbed and redirected rather than having to
+   finish what it was doing. Springs start from the current on-screen value, so
+   an interrupted animation never jumps. */
+const glide = { raf:0 };
+const KEEP_ON_SCREEN = 160;     // px of content that must stay visible
+
+function stopGlide() {
+  if (glide.raf) cancelAnimationFrame(glide.raf);
+  glide.raf = 0;
+}
+// how far a flick coasts — the exponential-decay projection from Apple's
+// Designing Fluid Interfaces sample, not the v²/2a of a physics textbook
+const projectGlide = (v, decel = 0.998) => (v / 1000) * decel / (1 - decel);
+// the further past an edge you drag, the less the canvas follows
+const rubber = (over, dim, c = 0.55) => (over * dim * c) / (dim + c * Math.abs(over));
+
+function panBounds() {
+  const L = state.layout, r = canvasRect(), k = state.tf.k;
+  if (!L) return { minX:-Infinity, maxX:Infinity, minY:-Infinity, maxY:Infinity };
+  const w = L.width * k, h = L.height * k;
+  return {
+    minX: Math.min(KEEP_ON_SCREEN - w, r.width - KEEP_ON_SCREEN),
+    maxX: r.width - KEEP_ON_SCREEN,
+    minY: Math.min(KEEP_ON_SCREEN - h, r.height - KEEP_ON_SCREEN),
+    maxY: r.height - KEEP_ON_SCREEN
+  };
+}
+// live resistance while dragging past an edge
+function bandPan(x, y) {
+  const b = panBounds(), r = canvasRect();
+  if (x < b.minX) x = b.minX - rubber(b.minX - x, r.width);
+  else if (x > b.maxX) x = b.maxX + rubber(x - b.maxX, r.width);
+  if (y < b.minY) y = b.minY - rubber(b.minY - y, r.height);
+  else if (y > b.maxY) y = b.maxY + rubber(y - b.maxY, r.height);
+  return { x, y };
+}
+
+// Critically damped spring (damping ratio 1, no overshoot) toward a transform.
+// `response` is seconds-to-target, not a fixed duration - the settle emerges.
+function springTf(target, response = 0.4, v0 = { x:0, y:0 }) {
+  stopGlide();
+  if (reduceMotion.matches) {                 // gentler equivalent, no travel
+    Object.assign(state.tf, target); applyTf(); return;
+  }
+  const w = 2 * Math.PI / response;
+  const v = { x:v0.x || 0, y:v0.y || 0, k:0 };
+  let last = performance.now();
+  const step = now => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    let moving = false;
+    for (const key of ['x', 'y', 'k']) {
+      if (target[key] === undefined) continue;
+      const gap = target[key] - state.tf[key];
+      v[key] += (w * w * gap - 2 * w * v[key]) * dt;
+      state.tf[key] += v[key] * dt;
+      if (Math.abs(gap) > (key === 'k' ? 0.001 : 0.5) || Math.abs(v[key]) > (key === 'k' ? 0.01 : 2))
+        moving = true;
+    }
+    applyTf();
+    if (moving) glide.raf = requestAnimationFrame(step);
+    else { Object.assign(state.tf, target); applyTf(); glide.raf = 0; }
+  };
+  glide.raf = requestAnimationFrame(step);
+}
+
+// A flick: coast at the release velocity, decaying, and spring back at edges.
+function glidePan(vx, vy) {
+  stopGlide();
+  const b = panBounds();
+  const settled = () => {
+    const t = bandPan(state.tf.x, state.tf.y);
+    return t.x === state.tf.x && t.y === state.tf.y;
+  };
+  if (reduceMotion.matches || (Math.hypot(vx, vy) < 60 && settled())) {
+    const c = { x:Math.min(b.maxX, Math.max(b.minX, state.tf.x)),
+                y:Math.min(b.maxY, Math.max(b.minY, state.tf.y)) };
+    if (c.x !== state.tf.x || c.y !== state.tf.y) springTf(c, 0.4);
+    return;
+  }
+  // where the flick wants to end up, then clamped to what's reachable
+  const target = {
+    x: Math.min(b.maxX, Math.max(b.minX, state.tf.x + projectGlide(vx))),
+    y: Math.min(b.maxY, Math.max(b.minY, state.tf.y + projectGlide(vy)))
+  };
+  springTf(target, 0.55, { x:vx, y:vy });      // hand the velocity over — no seam
+}
+
 function applyTf() {
   viewport.setAttribute('transform',
     `translate(${state.tf.x},${state.tf.y}) scale(${state.tf.k})`);
+  queuePaint();
 }
-function fitView(mode) {
+function fitView(mode, animate) {
   const L = state.layout; if (!L || !L.nodes.length) return;
-  const r = svg.getBoundingClientRect();
+  const r = canvasRect();
   const whole = Math.min(r.width / L.width, r.height / (L.height + 40), 1.1);
+  let to;
   if (mode === 'width') {
     // readable default: fit horizontally, park at the top and let the user pan down
     const k = Math.min(1.05, Math.max(.72, (r.width - 32) / L.width));
-    state.tf = { k, x: L.width * k <= r.width ? (r.width - L.width * k) / 2 : 12, y:22 };
+    to = { k, x: L.width * k <= r.width ? (r.width - L.width * k) / 2 : 12, y:22 };
   } else {
-    state.tf = { k:whole, x:(r.width - L.width * whole) / 2,
-                 y:(r.height - L.height * whole) / 2 + 16 * whole };
+    to = { k:whole, x:(r.width - L.width * whole) / 2,
+           y:(r.height - L.height * whole) / 2 + 16 * whole };
   }
-  applyTf();
+  if (animate) springTf(to, 0.4);
+  else { stopGlide(); state.tf = to; applyTf(); }
 }
 function zoomBy(f, cx, cy) {
-  const r = svg.getBoundingClientRect();
+  const r = canvasRect();
   cx = cx === undefined ? r.width / 2 : cx; cy = cy === undefined ? r.height / 2 : cy;
   const k2 = Math.min(2.4, Math.max(.12, state.tf.k * f));
   state.tf.x = cx - (cx - state.tf.x) * (k2 / state.tf.k);
@@ -987,9 +1173,11 @@ const pointers = new Map();
 let pinch = null;
 
 svg.addEventListener('pointerdown', e => {
+  stopGlide();                       // grabbing a moving canvas stops it dead
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
   if (pointers.size === 1) {
-    drag = { x:e.clientX, y:e.clientY, ox:state.tf.x, oy:state.tf.y, moved:false };
+    drag = { x:e.clientX, y:e.clientY, ox:state.tf.x, oy:state.tf.y, moved:false,
+             hist:[{ x:e.clientX, y:e.clientY, t:performance.now() }] };
     svg.classList.add('grabbing');
     // deliberately NOT setPointerCapture: capturing on the <svg> retargets the
     // follow-up click to the <svg>, which swallows every node click
@@ -1004,7 +1192,7 @@ svg.addEventListener('pointerdown', e => {
 addEventListener('pointermove', e => {
   if (!pointers.has(e.pointerId)) return;
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-  const r = svg.getBoundingClientRect();
+  const r = canvasRect();
   if (pinch && pointers.size >= 2) {
     const [a, b] = [...pointers.values()];
     const d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -1018,15 +1206,32 @@ addEventListener('pointermove', e => {
     return;
   }
   if (!drag) return;
-  state.tf.x = drag.ox + e.clientX - drag.x;
-  state.tf.y = drag.oy + e.clientY - drag.y;
+  const banded = bandPan(drag.ox + e.clientX - drag.x, drag.oy + e.clientY - drag.y);
+  state.tf.x = banded.x;
+  state.tf.y = banded.y;
   if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) drag.moved = true;
+  // a short history, so release velocity reflects the flick and not one stray move
+  drag.hist.push({ x:e.clientX, y:e.clientY, t:performance.now() });
+  if (drag.hist.length > 6) drag.hist.shift();
   applyTf();
 });
 function endPointer(e) {
   pointers.delete(e.pointerId);
   if (pointers.size < 2) pinch = null;
-  if (!pointers.size) { svg.classList.remove('grabbing'); }
+  if (!pointers.size) {
+    svg.classList.remove('grabbing');
+    if (drag && drag.moved) {
+      const h = drag.hist, last = h[h.length - 1];
+      // measure over ~80ms of travel: long enough to be stable, short enough
+      // to still be the flick the finger actually made
+      let first = h[0];
+      for (const s of h) if (last.t - s.t <= 80) { first = s; break; }
+      const dt = (last.t - first.t) / 1000;
+      glidePan(dt > 0.008 ? (last.x - first.x) / dt : 0,
+               dt > 0.008 ? (last.y - first.y) / dt : 0);
+    }
+    drag = null;
+  }
 }
 addEventListener('pointerup', endPointer);
 addEventListener('pointercancel', endPointer);
@@ -1034,7 +1239,7 @@ svg.addEventListener('pointerleave', e => { if (e.pointerType !== 'mouse') endPo
 
 svg.addEventListener('wheel', e => {
   e.preventDefault();
-  const r = svg.getBoundingClientRect();
+  const r = canvasRect();
   zoomBy(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX - r.left, e.clientY - r.top);
 }, { passive:false });
 svg.addEventListener('click', () => { if (!drag || !drag.moved) select(null); });
@@ -1186,15 +1391,14 @@ $('#detail').addEventListener('click', e => {
 });
 function centerOn(id, onlyIfOffscreen) {
   const n = byId[id]; if (n._x === undefined) return;
-  const r = svg.getBoundingClientRect(), k = state.tf.k;
+  const r = canvasRect(), k = state.tf.k;
   if (onlyIfOffscreen) {
     const sx = n._x * k + state.tf.x, sy = n._y * k + state.tf.y;
     const pad = 40;
     if (sx > pad && sy > pad && sx + NW * k < r.width - pad && sy + NH * k < r.height - pad) return;
   }
-  state.tf.x = r.width / 2 - (n._x + NW / 2) * k;
-  state.tf.y = r.height / 2 - (n._y + NH / 2) * k;
-  applyTf();
+  springTf({ x: r.width / 2 - (n._x + NW / 2) * k,
+             y: r.height / 2 - (n._y + NH / 2) * k }, 0.4);
 }
 
 /* ---------- deep linking: the URL is the shareable unit ---------- */
@@ -1382,8 +1586,10 @@ $('#tag-clear').onclick = () => { state.tags.clear();
 let qt;
 $('#q').addEventListener('input', e => {
   state.q = e.target.value;
-  clearTimeout(qt);
-  qt = setTimeout(() => { render(); writeHash(); }, 140);
+  // No debounce: a keystroke must show up on the next frame. Coalescing to one
+  // render per frame is enough now that painting is bounded by the viewport.
+  if (qt) return;
+  qt = requestAnimationFrame(() => { qt = 0; render(true); writeHash(); });
 });
 $('#t-seeds').onchange = e => { state.seeds = e.target.checked; render(); writeHash(); };
 $('#t-labels').onchange = e => { state.labels = e.target.checked; render(true); };
@@ -1403,7 +1609,7 @@ $('#btn-view').onclick = () => {
 };
 $('#zoom-in').onclick = () => zoomBy(1.2);
 $('#zoom-out').onclick = () => zoomBy(1 / 1.2);
-$('#fit').onclick = () => fitView();
+$('#fit').onclick = () => fitView(undefined, true);
 $('#btn-theme').onclick = e => {
   const light = document.documentElement.dataset.theme === 'light';
   document.documentElement.dataset.theme = light ? 'dark' : 'light';
@@ -1428,7 +1634,11 @@ addEventListener('keydown', e => {
   if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomBy(1.2); }
   if (e.key === '-') { e.preventDefault(); zoomBy(1 / 1.2); }
 });
-addEventListener('resize', () => { clearTimeout(qt); qt = setTimeout(() => fitView('width'), 150); });
+let resizeT;
+addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => fitView('width'), 150);
+});
 
 /* ---------- cross-project modal ---------- */
 function buildModal() {
@@ -1493,6 +1703,11 @@ if (state.sel) {
   $('#main').classList.add('detail');
   renderDetail(byId[state.sel]);
   requestAnimationFrame(() => centerOn(state.sel));
+}
+
+// a handle for debugging and for the project's own performance tests
+window.lineage = { DATA, state, render, paintGraph, fitView, select, layout,
+                   springTf, glidePan, bandPan, panBounds, viewRect, canvasRect };
 }
 </script>
 </body>

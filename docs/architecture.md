@@ -80,14 +80,52 @@ prettifying (`proj_marts_finance` → `marts · finance`).
 
 ### `render.py`
 
-Inlines the payload as JSON into the packaged template, escaping `</` as `<\/`
-so the data cannot terminate its own `<script>` block. The template is loaded
-through `importlib.resources`, so it works from a wheel or an editable install.
+Inlines the payload into the packaged template. Below ~1 MB it goes in as plain
+JSON with `</` escaped as `<\/` so the data cannot terminate its own `<script>`
+block; above that it is gzipped and base64'd (base64 contains no `<` at all, so
+the escaping question disappears) and the page decodes it with
+`DecompressionStream`. Model SQL compresses ~19x, which is the difference
+between a file you can email and one you cannot. The template is loaded through
+`importlib.resources`, so it works from a wheel or an editable install.
 
 ### `templates/lineage.html`
 
 The page itself: hand-written vanilla JS building SVG, its own layout, pan/zoom
 and SQL highlighter. No libraries, no CDN, no network requests of any kind.
+
+**Viewport culling** is what keeps it usable at size. `layout()` positions every
+visible node (cheap arithmetic), but `paintGraph()` only builds DOM for the
+slice inside the viewport plus a padding margin. Panning within that margin
+costs nothing; leaving it triggers one repaint, coalesced to one per frame.
+Emphasis and roving focus then operate on the painted subset, so hover and click
+are O(on-screen) rather than O(graph).
+
+Two details that matter if you touch it: the canvas rect is cached, because
+calling `getBoundingClientRect()` in the per-frame cull check forces a synchronous
+layout and costs more than the work it saves; and the edge fan-out loop walks
+*every* edge while building DOM for only the visible ones, because indices
+derived from a partial list would make strokes jump as you pan.
+
+**Motion.** Direct manipulation is 1:1 and instant. Programmatic view changes
+(Fit, centring on a selection or deep link) use a critically damped spring that
+starts from the current on-screen value, so an interrupted animation never
+jumps; pointer-down cancels it outright. A flick projects its resting point from
+release velocity and hands that velocity to the spring, and dragging past the
+edges rubber-bands rather than hard-stopping. All of it collapses to instant
+positioning under `prefers-reduced-motion`.
+
+Measured on a synthetic 5750-node / 9700-edge graph:
+
+| | before | after |
+|---|---|---|
+| SVG elements in the DOM | 77,700 | ~1,600 |
+| drag frame | 479 ms | <1 ms |
+| zoom step | 586 ms | ~19 ms |
+| select a node | 318 ms | ~17 ms |
+| hover | 8 ms | 0.6 ms |
+| re-render (filter/keystroke) | 147–227 ms | ~23 ms |
+| search latency | +140 ms debounce | next frame |
+| file size | 9.0 MB | 552 KB |
 
 ### `sql_format.py`
 

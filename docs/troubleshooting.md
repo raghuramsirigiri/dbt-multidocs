@@ -112,15 +112,27 @@ gives the true total.
 
 ### The page is large
 
-Model SQL dominates. It is embedded so the page works offline with no requests.
-143 KB for 25 nodes is typical; a few hundred models will run into the megabytes,
-which is still fine for a static file. SQL over 40 KB per node is truncated.
+Model SQL dominates the payload. Above ~1 MB of JSON the payload is stored
+gzipped and base64'd, which typically shrinks it by 15-20x — a 3000-model graph
+goes from 8.8 MB of JSON to a 552 KB file. Smaller graphs stay as plain JSON so
+they open in any browser.
+
+If you need a plain-JSON page (a browser without `DecompressionStream` — that
+means pre-2023 Firefox or Safari), build with `--compress never` and accept the
+larger file. `--compress always` forces compression regardless of size.
+
+SQL over 40 KB per node is truncated before it is embedded.
 
 ### The page is slow to interact with
 
-Above a few hundred visible nodes the page shows a hint to filter down. Use the
-project and tag filters, the search box, or **Cross-project only** to cut the
-graph to what you're looking at.
+It shouldn't be, at any size: only the nodes and edges inside the viewport are
+ever in the DOM, so pan, zoom, hover and click cost the same whether the graph
+has 400 models or 6000. On a 5750-node graph a drag frame is under a
+millisecond and the DOM holds ~1,600 elements rather than ~78,000.
+
+If it is slow anyway, it's worth an issue — include the node/edge counts from
+the build summary. Meanwhile the project and tag filters, the search box and
+**Cross-project only** all cut the graph down.
 
 ## Getting help
 

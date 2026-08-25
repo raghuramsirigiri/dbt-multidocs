@@ -57,7 +57,20 @@ was found.
 | `--no-stitch` | off | declared `ref()` edges only, no inference |
 | `--stitch-scope {all,cross}` | `all` | `cross` skips same-project seed/source links |
 | `--strict` | off | exit 2 if anything warned |
+| `--compress {auto,always,never}` | `auto` | store the payload gzipped+base64 above ~1 MB |
 | `--json FILE` | — | also dump the graph payload |
+
+### `--compress`
+
+Model SQL compresses extremely well, so large graphs are stored gzipped and
+base64'd inside the page and decoded with `DecompressionStream` — still one
+file, still no network and no dependencies. A 3000-model graph is 552 KB
+compressed against 9.0 MB plain.
+
+`auto` (the default) compresses only above ~1 MB of JSON, so ordinary pages stay
+plain JSON and open in any browser. `never` keeps plain JSON at any size, for
+browsers without `DecompressionStream` (pre-2023 Firefox/Safari). `always`
+compresses regardless of size.
 
 ### Output
 

@@ -112,6 +112,7 @@ swimlane row. JSON config files work too.
 | `--no-stitch` | declared `ref()` edges only, no inference |
 | `--stitch-scope cross` | don't link a project's own seeds to its own sources |
 | `--strict` | exit 2 if anything warned |
+| `--compress auto\|always\|never` | gzip the embedded payload (default: auto, above ~1 MB) |
 | `--json FILE` | also dump the graph payload |
 
 ## The page
@@ -121,6 +122,13 @@ tags and column names; per-project and per-tag filters; a project-level rollup
 map; a cross-project dependency report; a detail panel with columns, types, test
 coverage and Source/Compiled SQL; deep links; PNG/SVG export; light and dark
 themes. All of it offline, from `file://`.
+
+**It stays interactive at size.** Only the slice of the graph inside the
+viewport is ever in the DOM, so a 6000-node graph pans, zooms and filters as
+cheaply as a small one. Flicks carry momentum and rubber-band at the edges;
+programmatic moves (Fit, jumping to a selection) spring from wherever the canvas
+currently is and can be grabbed mid-flight. `prefers-reduced-motion` is
+honoured.
 
 ## Documentation
 

@@ -6,3 +6,8 @@ build/
 dist/
 .pytest_cache/
 dbt-docs/
+
+
+# temp output files
+temp/
+test/

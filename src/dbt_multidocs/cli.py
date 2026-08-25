@@ -116,9 +116,19 @@ def cmd_build(args) -> int:
     )
 
     title = args.title or config.get("title") or "Multi-Project dbt Lineage"
-    out = pathlib.Path(args.out or config.get("out") or DEFAULT_OUT).expanduser().resolve()
+    if args.out:
+        out = pathlib.Path(args.out)                      # a flag is relative to the CWD
+    elif config.get("out"):
+        # like projects[].path, a config path is relative to the config file itself,
+        # so a checked-in config writes to the same place from any directory
+        out = pathlib.Path(config["out"])
+        if not out.is_absolute() and config_dir:
+            out = pathlib.Path(config_dir) / out
+    else:
+        out = DEFAULT_OUT
+    out = out.expanduser().resolve()
     template = pathlib.Path(args.template).expanduser().resolve() if args.template else None
-    render.write(payload, out, title, template)
+    written = render.write(payload, out, title, template, compress=args.compress)
 
     if args.json:
         jp = pathlib.Path(args.json).expanduser().resolve()
@@ -129,7 +139,12 @@ def cmd_build(args) -> int:
     for p, l in zip(projects, loaded):
         own = sum(1 for uid, o in merged.owner.items() if o == p.id)
         print("  {:<24} {:>4} nodes   {}".format(p.id, own, l.manifest_path))
-    print("written  : {}  ({:.0f} KB)".format(out, out.stat().st_size / 1024))
+    size_kb = out.stat().st_size / 1024
+    if written["compressed"]:
+        print("written  : {}  ({:.0f} KB, payload gzipped {:.1f} MB -> {:.0f} KB)".format(
+            out, size_kb, written["raw_bytes"] / 1048576, written["stored_bytes"] / 1024))
+    else:
+        print("written  : {}  ({:.0f} KB)".format(out, size_kb))
     print("graph    : {} nodes / {} edges across {} projects".format(
         len(payload["nodes"]), len(payload["edges"]), s["projects"]))
     print("           {} models, {} seeds, {} sources, {} tests".format(
@@ -165,6 +180,9 @@ def main(argv=None) -> int:
                    help="'all' also links a project's own seeds to its sources")
     b.add_argument("--strict", action="store_true", help="exit non-zero if anything warned")
     b.add_argument("--json", metavar="FILE", help="also dump the graph payload")
+    b.add_argument("--compress", choices=("auto", "always", "never"), default="auto",
+                   help="store the payload gzipped+base64 (default: auto, above ~1MB). "
+                        "'never' keeps plain JSON for browsers without DecompressionStream")
     b.set_defaults(func=cmd_build)
 
     d = sub.add_parser("discover", help="list the projects and their artifact status")

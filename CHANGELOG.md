@@ -6,6 +6,42 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Viewport culling.** Only the slice of the graph inside the viewport is built
+  into the DOM, so pan, zoom, hover, click and filtering cost the same at 6000
+  nodes as at 400. On a 5750-node graph the DOM drops from ~77,700 SVG elements
+  to ~1,600 and a drag frame from 479 ms to under 1 ms.
+- **Compressed payloads.** Above ~1 MB of JSON the embedded payload is stored
+  gzipped and base64'd and decoded in the page with `DecompressionStream` — a
+  3000-model graph goes from a 9.0 MB file to 552 KB. Still one self-contained
+  file with no network and no dependencies. `--compress {auto,always,never}`;
+  smaller pages stay plain JSON so they open in any browser.
+- **Fluid view transform.** Flicks carry their release velocity into a momentum
+  glide whose resting point is projected from that velocity; dragging past the
+  edges rubber-bands with progressive resistance instead of hard-stopping.
+  Programmatic moves (Fit, centring on a selection or deep link) use a
+  critically damped spring that starts from the current on-screen value and is
+  cancelled by pointer-down, so an animation in flight can always be grabbed.
+  All of it collapses to instant positioning under `prefers-reduced-motion`.
+- `tools/bench_graph.py`, which generates synthetic projects at any size for
+  re-measuring the above.
+
+### Changed
+
+- Search no longer waits on a 140 ms debounce; it renders on the next frame.
+- Nodes highlight on pointer-down rather than on click.
+- The "filter down for smooth interaction" banner is gone — it is no longer true.
+
+### Fixed
+
+- A config file's `out:` now resolves against the config file's directory, as
+  `projects[].path` already did and as the docs already claimed. It was
+  resolving against the working directory, so a checked-in config wrote to a
+  different place depending on where you ran it from.
+- The canvas rect is cached instead of measured inside the per-frame cull check,
+  where `getBoundingClientRect()` forced a synchronous layout costing 13 ms.
+
 ## [0.1.0]
 
 First release.
