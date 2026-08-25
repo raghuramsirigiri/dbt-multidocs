@@ -1,5 +1,9 @@
 # dbt-multidocs
 
+[![CI](https://github.com/raghuramsirigiri/dbt-docs-repo/actions/workflows/ci.yml/badge.svg)](https://github.com/raghuramsirigiri/dbt-docs-repo/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![Dependencies](https://img.shields.io/badge/runtime%20deps-none-brightgreen)
+
 Point it at any number of dbt projects — in unrelated directories, on unrelated
 repos — and get **one self-contained lineage page**: a single HTML file, no
 network calls, no JS dependencies, no dbt install, no warehouse connection.
@@ -117,14 +121,34 @@ map; a cross-project dependency report; a detail panel with columns, types, test
 coverage and Source/Compiled SQL; deep links; PNG/SVG export; light and dark
 themes. All of it offline, from `file://`.
 
-## Tests
+## Documentation
+
+| | |
+|---|---|
+| [Getting started](docs/getting-started.md) | install, first build, CI setup |
+| [How linking works](docs/linking.md) | declared vs inferred edges, and when inference fails |
+| [CLI reference](docs/cli.md) | every command and flag |
+| [Configuration](docs/configuration.md) | `dbt-multidocs.yml` |
+| [Architecture](docs/architecture.md) | the pipeline, the payload shape, library use |
+| [Troubleshooting](docs/troubleshooting.md) | every warning, and what to do about it |
+
+A rendered example page — a real build of three independent dbt projects — is at
+[docs/lineage.html](docs/lineage.html).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The short version:
 
 ```bash
-.venv/bin/pytest
+python -m venv .venv && .venv/bin/pip install -e ".[dev]" && .venv/bin/pytest
 ```
 
-Synthetic manifests only — no dbt, no warehouse, no fixtures checked in as
-multi-megabyte artifacts.
+Tests use synthetic manifests only — no dbt, no warehouse, no multi-megabyte
+fixtures in the repository. The suite runs in under a second.
+
+Changes are held to the design constraints above; the ones most likely to catch
+you out are **no runtime dependencies** and **nothing derived from a common
+parent directory or the working directory**.
 
 ## Credits
 

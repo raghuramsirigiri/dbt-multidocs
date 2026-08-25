@@ -1,0 +1,66 @@
+name: Bug report
+description: Something produced a wrong graph, a crash, or a confusing message
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please don't attach real `manifest.json` files — they contain your model
+        SQL and schema names. The `dbt-multidocs build --json` summary below is
+        usually enough, and if not we can ask for a reduced example.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected versus what you got.
+      placeholder: |
+        Two projects that are linked by source() showed up as separate islands.
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: The command you ran
+      render: shell
+      placeholder: dbt-multidocs build --project ../a --project ../b --out docs/lineage.html
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Full output
+      description: Including any `warning :` lines — those usually explain it.
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: linking
+    attributes:
+      label: How are the projects linked?
+      options:
+        - "source() over a shared warehouse (separate repos, separate manifests)"
+        - "cross-project ref() / dbt Mesh (dependencies.yml)"
+        - "a single manifest containing several packages"
+        - "not linked / not sure"
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "dbt-multidocs 0.1.0, Python 3.11, dbt 1.12.3, duckdb, Windows 11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: >
+        For a stitching problem, the `relation_name` of the model and of the
+        source that should have matched is the single most useful detail.
