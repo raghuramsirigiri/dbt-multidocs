@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-26
+
 ### Fixed
 
 - **Deep graphs no longer crash.** Node depth and the project rollup were
@@ -167,7 +169,8 @@ First release, published to PyPI as
   themes. Inferred edges render dotted with their own legend entry so a guessed
   link is never mistaken for a declared one.
 
-[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/raghuramsirigiri/dbt-multidocs/compare/v0.1.0...v0.1.1
