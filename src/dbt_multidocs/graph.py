@@ -7,7 +7,7 @@ can draw an inferred link differently from a declared `ref()`.
 """
 from __future__ import annotations
 
-from typing import Dict, List, Sequence
+from typing import Any, Dict, List, Sequence
 
 from . import layout
 from .sql_format import format_sql
@@ -127,7 +127,7 @@ def build(merged, stitched_edges=(), title_layers=None, project_labels=None) -> 
 
     # ---- projects / lanes -------------------------------------------------- #
     pids = layout.order_projects(sorted({owner[u] for u in nodes}), title_layers)
-    packages = [
+    packages: List[Dict[str, Any]] = [
         {
             "name": pid,
             "label": labels.get(pid) or layout.pretty(pid),
@@ -203,7 +203,7 @@ def build(merged, stitched_edges=(), title_layers=None, project_labels=None) -> 
         pa, pb = owner[a], owner[b]
         if pa != pb:
             pkg_edges[(pa, pb)] = pkg_edges.get((pa, pb), 0) + 1
-    pkg_parents = {p["name"]: [] for p in packages}
+    pkg_parents: Dict[str, list] = {p["name"]: [] for p in packages}
     for (pa, pb) in pkg_edges:
         pkg_parents[pb].append(pa)
     pkg_depth = _longest_depths(pkg_parents)

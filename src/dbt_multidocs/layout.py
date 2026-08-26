@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 
 # Ordered layer patterns, first match wins. Deliberately broader than the
 # reference script's raw/int/mart/dashboard so that other naming schemes
@@ -25,7 +25,7 @@ PALETTE: Sequence[str] = (
 )
 
 
-def layer_rank(name: str, layers: Sequence[str] = None) -> int:
+def layer_rank(name: str, layers: Optional[Sequence[str]] = None) -> int:
     for i, pattern in enumerate(layers or DEFAULT_LAYERS):
         try:
             if re.search(pattern, name, re.I):
@@ -46,5 +46,5 @@ def color_for(index: int) -> str:
     return PALETTE[index % len(PALETTE)]
 
 
-def order_projects(ids: List[str], layers: Sequence[str] = None) -> List[str]:
+def order_projects(ids: List[str], layers: Optional[Sequence[str]] = None) -> List[str]:
     return sorted(ids, key=lambda p: (layer_rank(p, layers), p))

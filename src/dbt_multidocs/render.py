@@ -12,6 +12,7 @@ import base64
 import gzip
 import json
 import pathlib
+from typing import Optional
 
 TEMPLATE_NAME = "lineage.html"
 
@@ -46,7 +47,8 @@ def encode(graph: dict, compress: str = "auto"):
     return blob, GZIP_TYPE, raw_bytes, len(blob)
 
 
-def render(graph: dict, title: str, template: pathlib.Path = None, compress: str = "auto"):
+def render(graph: dict, title: str, template: Optional[pathlib.Path] = None,
+           compress: str = "auto"):
     """Return (html, raw_bytes, stored_bytes, script_type)."""
     tpl = pathlib.Path(template) if template else default_template()
     html = tpl.read_text(encoding="utf8")

@@ -62,7 +62,8 @@ def _pretty_label(name: str) -> str:
     return s.replace("_", " ").replace("-", " ").strip() or name
 
 
-def from_path(path, label: str = None, origin: str = "--project") -> Project:
+def from_path(path, label: Optional[str] = None,
+              origin: str = "--project") -> Project:
     """Accept a project root, a `target/` dir, a manifest.json, or a static index.html."""
     p = pathlib.Path(path).expanduser().resolve()
     root = manifest = catalog = None
@@ -137,7 +138,7 @@ def _dedupe(projects: Iterable[Project]) -> List[Project]:
 
 
 def resolve(paths=(), search_roots=(), depth: int = DEFAULT_DEPTH,
-            config: dict = None, config_dir=None) -> List[Project]:
+            config: Optional[dict] = None, config_dir=None) -> List[Project]:
     """Build the project list from CLI paths, a config file, then a search sweep."""
     projects: List[Project] = []
 

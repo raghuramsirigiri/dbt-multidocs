@@ -11,9 +11,9 @@ import dataclasses
 import json
 import pathlib
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-EMPTY_CATALOG = {"nodes": {}, "sources": {}}
+EMPTY_CATALOG: Dict[str, dict] = {"nodes": {}, "sources": {}}
 
 SUPPORTED_MANIFEST = "v12"
 SUPPORTED_CATALOG = "v1"

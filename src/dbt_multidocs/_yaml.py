@@ -13,7 +13,7 @@ import json
 import re
 
 try:  # pragma: no cover - depends on the host environment
-    import yaml as _pyyaml
+    import yaml as _pyyaml  # type: ignore[import-untyped]
 except Exception:  # pragma: no cover
     _pyyaml = None
 

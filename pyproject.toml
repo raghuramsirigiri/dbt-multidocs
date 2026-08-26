@@ -56,4 +56,4 @@ dbt-multidocs = "dbt_multidocs.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-dbt_multidocs = ["templates/*.html"]
+dbt_multidocs = ["templates/*.html", "py.typed"]
