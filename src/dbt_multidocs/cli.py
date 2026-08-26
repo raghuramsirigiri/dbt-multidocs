@@ -4,13 +4,20 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import platform
 import sys
 
-from . import _yaml, artifacts, discovery, render, stitch
+from . import __version__, _yaml, artifacts, discovery, render, stitch
 from . import graph as graph_mod
 from . import merge as merge_mod
 
 DEFAULT_OUT = pathlib.Path("dbt-docs") / "lineage.html"
+
+
+def version_string() -> str:
+    """Everything the bug report template asks for, in one line to paste."""
+    return "dbt-multidocs {} (Python {}, {})".format(
+        __version__, platform.python_version(), sys.platform)
 
 
 def _load_config(path):
@@ -169,6 +176,7 @@ def main(argv=None) -> int:
         prog="dbt-multidocs",
         description="Combine several independent dbt projects into one lineage page.",
     )
+    ap.add_argument("--version", action="version", version=version_string())
     sub = ap.add_subparsers(dest="cmd")
 
     b = sub.add_parser("build", help="write the combined lineage page")

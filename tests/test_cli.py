@@ -102,3 +102,27 @@ def test_manifest_path_accepted_directly(two_repos):
 def test_target_dir_accepted_directly(two_repos):
     project = discovery.from_path(two_repos[0] / "target")
     assert project.project_name == "up"
+
+
+def test_version_reports_what_a_bug_report_needs(capsys):
+    """--version is the one line the issue template asks people to paste."""
+    import dbt_multidocs
+
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--version"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out
+    assert dbt_multidocs.__version__ in out
+    assert "dbt-multidocs" in out and "Python" in out
+
+
+def test_the_packaged_version_matches_the_module():
+    """pyproject reads __version__ dynamically; this catches that wiring breaking."""
+    metadata = pytest.importorskip("importlib.metadata")
+    import dbt_multidocs
+
+    try:
+        installed = metadata.version("dbt-multidocs")
+    except metadata.PackageNotFoundError:            # running from a source tree
+        pytest.skip("dbt-multidocs is not installed in this environment")
+    assert installed == dbt_multidocs.__version__

@@ -3,9 +3,17 @@
 ```
 dbt-multidocs build     [options]     # write the combined lineage page
 dbt-multidocs discover  [options]     # list projects and their artifact status
+dbt-multidocs --version               # what to paste into a bug report
 ```
 
 Also runnable as `python -m dbt_multidocs`.
+
+`--version` prints the package version alongside the Python version and
+platform:
+
+```
+dbt-multidocs 0.1.3 (Python 3.11.9, win32)
+```
 
 ## Locating projects
 

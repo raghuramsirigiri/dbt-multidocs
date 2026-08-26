@@ -10,7 +10,9 @@ dbt-docs/
 
 # temp output files
 temp/
-test/
+# local scratch: deliberately NOT "test/", which sits one keystroke from the
+# real "tests/" directory and would silently ignore it
+scratch/
 
 # coverage
 .coverage
