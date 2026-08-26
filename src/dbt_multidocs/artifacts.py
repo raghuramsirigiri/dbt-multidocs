@@ -13,10 +13,18 @@ import pathlib
 import re
 from typing import Dict, List, Optional
 
-EMPTY_CATALOG: Dict[str, dict] = {"nodes": {}, "sources": {}}
-
 SUPPORTED_MANIFEST = "v12"
 SUPPORTED_CATALOG = "v1"
+
+
+def empty_catalog() -> Dict[str, dict]:
+    """A fresh catalog with nothing in it.
+
+    A function rather than a constant: every project that has no catalog.json
+    gets one of these, and a single shared instance would give them all the
+    same two inner dicts to fill in.
+    """
+    return {"nodes": {}, "sources": {}}
 
 
 class ArtifactError(RuntimeError):
@@ -73,7 +81,7 @@ def from_static_docs(path: pathlib.Path):
     mend = _scan_object(src, mstart)
     manifest = json.loads(src[mstart:mend + 1])
 
-    catalog = dict(EMPTY_CATALOG)
+    catalog = empty_catalog()
     c = src.find("catalog:{", mend)
     if c != -1:
         cstart = c + len("catalog:")
@@ -107,7 +115,7 @@ def load(project) -> Loaded:
         if catalog_path and catalog_path.exists():
             catalog = json.loads(catalog_path.read_text(encoding="utf8"))
         else:
-            catalog = dict(EMPTY_CATALOG)
+            catalog = empty_catalog()
             catalog_path = None
             warnings.append(
                 f"{project.id}: no catalog.json next to {path.name}; "

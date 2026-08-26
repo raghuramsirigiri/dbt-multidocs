@@ -99,6 +99,19 @@ def test_missing_catalog_degrades_to_blank_types(tmp_path):
     assert any("no catalog.json" in w for w in loaded.warnings)
 
 
+def test_catalogless_projects_do_not_share_one_catalog(tmp_path):
+    """Two projects with no catalog.json must get independent empty catalogs."""
+    a = artifacts.load(discovery.from_path(
+        write_project(tmp_path / "a", "a", manifest("a", nodes=[model("a", "x", "s")]),
+                      catalog=None)))
+    b = artifacts.load(discovery.from_path(
+        write_project(tmp_path / "b", "b", manifest("b", nodes=[model("b", "y", "s")]),
+                      catalog=None)))
+    a.catalog["nodes"]["model.a.x"] = {"columns": {}}
+    assert b.catalog["nodes"] == {}
+    assert artifacts.empty_catalog() == {"nodes": {}, "sources": {}}
+
+
 def test_missing_manifest_is_a_clear_error(tmp_path):
     root = tmp_path / "p"
     root.mkdir()
