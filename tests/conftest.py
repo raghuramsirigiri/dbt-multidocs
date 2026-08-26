@@ -94,3 +94,23 @@ def two_repos(tmp_path):
     b = write_project(tmp_path / "elsewhere" / "repo_down", "down", down,
                       {"nodes": {}, "sources": {}})
     return a, b
+
+
+@pytest.fixture(params=["fallback", "pyyaml"])
+def yaml_parser(request, monkeypatch):
+    """Run a test against both YAML readers.
+
+    The package has no runtime dependencies, so it reads YAML with its own
+    parser whenever PyYAML is not importable - but dbt-core depends on PyYAML,
+    so most real users are on the *other* branch. Neither is hypothetical, and
+    a test that only covers whichever one happens to be installed proves half
+    of what it looks like it proves.
+    """
+    from dbt_multidocs import _yaml
+
+    if request.param == "fallback":
+        monkeypatch.setattr(_yaml, "_pyyaml", None)
+    else:
+        pyyaml = pytest.importorskip("yaml", reason="PyYAML is not installed")
+        monkeypatch.setattr(_yaml, "_pyyaml", pyyaml)
+    return request.param

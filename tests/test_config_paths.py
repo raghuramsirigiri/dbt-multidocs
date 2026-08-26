@@ -1,9 +1,14 @@
 """Paths inside a config file resolve against the config file, not the CWD."""
 import json
 
+import pytest
+
 from dbt_multidocs import cli
 
 from conftest import manifest, model, write_project
+
+# the config is read by whichever YAML parser the environment supplies
+pytestmark = pytest.mark.usefixtures("yaml_parser")
 
 
 def _project(tmp_path, name="p"):
