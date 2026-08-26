@@ -2,16 +2,25 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import pathlib
 import platform
 import sys
+from typing import List, Tuple
 
 from . import __version__, _yaml, artifacts, discovery, render, stitch
 from . import graph as graph_mod
 from . import merge as merge_mod
 
 DEFAULT_OUT = pathlib.Path("dbt-docs") / "lineage.html"
+
+# Every key the tool reads. Anything else in the file does nothing, and a
+# config that quietly does nothing is worse than one that fails: `project:`
+# for `projects:` looks right, and produces an empty page.
+CONFIG_KEYS = ("title", "out", "projects", "layers", "links")
+PROJECT_KEYS = ("path", "label", "id")
+LINK_KEYS = ("from", "to", "remove", "suppress")
 
 
 def version_string() -> str:
@@ -29,6 +38,77 @@ def _load_config(path):
     if p.suffix.lower() == ".json":
         return json.loads(p.read_text(encoding="utf8")), p.parent
     return _yaml.load_file(p), p.parent
+
+
+def _unknown(key, allowed, where: str) -> str:
+    close = difflib.get_close_matches(str(key), allowed, n=1, cutoff=0.6)
+    hint = "; did you mean '{}'?".format(close[0]) if close else ""
+    return "{}: unknown key '{}' (ignored){}".format(where, key, hint)
+
+
+def check_config(config) -> Tuple[List[str], List[str]]:
+    """Inspect a loaded config. Returns (errors, warnings).
+
+    An unknown key is a warning: the rest of the file is still usable, and
+    saying so beats acting as though the user never wrote it. A malformed
+    *shape* is an error, because there is nothing sensible to do with it -
+    `projects:` given a string used to be iterated one character at a time.
+    """
+    if not isinstance(config, dict):
+        return ["config: expected a mapping of keys at the top level, found {}".format(
+            type(config).__name__)], []
+
+    errors: List[str] = []
+    warnings = [_unknown(k, CONFIG_KEYS, "config") for k in config if k not in CONFIG_KEYS]
+
+    for name in ("projects", "layers", "links"):
+        value = config.get(name)
+        if value is not None and not isinstance(value, list):
+            errors.append("config: '{}' must be a list, found {}".format(
+                name, type(value).__name__))
+
+    projects = config.get("projects")
+    for i, entry in enumerate(projects if isinstance(projects, list) else []):
+        where = "config: projects[{}]".format(i)
+        if isinstance(entry, dict):
+            warnings.extend(_unknown(k, PROJECT_KEYS, where)
+                            for k in entry if k not in PROJECT_KEYS)
+            if not entry.get("path"):
+                # an empty path resolves to the current directory, which is
+                # never what was meant and is hard to spot in the output
+                errors.append("{}: no 'path'".format(where))
+        elif not isinstance(entry, str):
+            errors.append("{}: expected a path or a mapping, found {}".format(
+                where, type(entry).__name__))
+
+    links = config.get("links")
+    for i, link in enumerate(links if isinstance(links, list) else []):
+        where = "config: links[{}]".format(i)
+        if not isinstance(link, dict):
+            errors.append("{}: expected a mapping with 'from' and 'to', found {}".format(
+                where, type(link).__name__))
+            continue
+        warnings.extend(_unknown(k, LINK_KEYS, where) for k in link if k not in LINK_KEYS)
+        missing = [k for k in ("from", "to") if not link.get(k)]
+        if missing:
+            warnings.append("{}: no {} (ignored)".format(
+                where, " or ".join("'{}'".format(k) for k in missing)))
+
+    return errors, warnings
+
+
+def _check(config) -> List[str]:
+    """Report the config, stopping on anything that cannot be worked around."""
+    errors, warnings = check_config(config)
+    _report(warnings)
+    if errors:
+        raise SystemExit("\n".join("error: {}".format(e) for e in errors))
+    return warnings
+
+
+def _report(warnings) -> None:
+    for w in warnings:
+        print("warning  : {}".format(w), file=sys.stderr)
 
 
 def _common(ap):
@@ -61,6 +141,7 @@ def _resolve(args, config, config_dir):
 
 def cmd_discover(args) -> int:
     config, config_dir = _load_config(args.config)
+    _check(config)
     projects = _resolve(args, config, config_dir)
     print("{} project(s):".format(len(projects)))
     missing = 0
@@ -80,6 +161,7 @@ def cmd_discover(args) -> int:
 
 def cmd_build(args) -> int:
     config, config_dir = _load_config(args.config)
+    config_warnings = _check(config)
     projects = _resolve(args, config, config_dir)
 
     loaded, warnings = [], []
@@ -163,10 +245,10 @@ def cmd_build(args) -> int:
     if args.json:
         print("payload  : {}".format(args.json))
 
-    for w in warnings:
-        print("warning  : {}".format(w), file=sys.stderr)
-    if warnings and args.strict:
-        print("error: --strict and {} warning(s)".format(len(warnings)), file=sys.stderr)
+    _report(warnings)
+    total = len(warnings) + len(config_warnings)      # config ones printed already
+    if total and args.strict:
+        print("error: --strict and {} warning(s)".format(total), file=sys.stderr)
         return 2
     return 0
 

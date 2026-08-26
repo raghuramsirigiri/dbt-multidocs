@@ -100,6 +100,8 @@ links:
     remove: true
 ```
 
+`remove: true` drops an edge (`suppress: true` is accepted as a synonym).
+
 `from` and `to` accept a full `unique_id`, the id without its `model.` / `source.`
 prefix, or a bare node name when that name is unique across every project. A
 reference that resolves to nothing — or to more than one node — is reported as
@@ -115,6 +117,24 @@ Default output path, equivalent to `--out`. The flag wins.
 ## Precedence
 
 For every setting: **command-line flag > config file > built-in default**.
+
+## Mistakes in the file
+
+The keys above are the only ones read, so an unrecognised one is reported
+rather than ignored — a singular `project:` parses fine and builds an empty
+page, which otherwise looks like a bug in the tool:
+
+```
+warning  : config: unknown key 'project' (ignored); did you mean 'projects'?
+```
+
+Unknown keys are warnings: the rest of the file still applies, and `--strict`
+counts them. A malformed *shape* is an error and stops the build, because there
+is nothing sensible to do with it:
+
+```
+error: config: 'projects' must be a list, found str
+```
 
 ## YAML support
 
