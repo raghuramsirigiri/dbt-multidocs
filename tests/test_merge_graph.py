@@ -62,6 +62,19 @@ def test_depth_is_cycle_safe():
     assert all(isinstance(d, int) and 0 <= d < len(depths) + 1 for d in depths)
 
 
+def test_a_deep_chain_does_not_hit_the_recursion_limit():
+    """Depth is bounded by the longest chain, which can exceed Python's stack.
+
+    The manifest order matters: dbt does not emit nodes parents-first, and a
+    chain listed leaves-first is what used to recurse once per link.
+    """
+    chain = [model("p", "m{}".format(i), "s",
+                   depends=["model.p.m{}".format(i - 1)] if i else [])
+             for i in reversed(range(2000))]
+    payload = graph.build(merge.merge([_loaded("p", manifest("p", nodes=chain))]))
+    assert max(n["depth"] for n in payload["nodes"]) == 1999
+
+
 def test_undeclared_column_from_a_test_is_flagged():
     m = model("p", "a", "s")
     m["columns"] = {"declared": {"description": "d"}}

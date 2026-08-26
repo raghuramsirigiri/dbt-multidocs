@@ -39,6 +39,49 @@ def _collect_tests(tests: Sequence[dict], nodes: Dict[str, dict]):
     return per_node, per_column, table_level
 
 
+def _longest_depths(parents: Dict[str, list]) -> Dict[str, int]:
+    """depth = length of the longest path from a root, for every key in `parents`.
+
+    Iterative (Kahn) rather than recursive: depth is bounded by the longest
+    ancestor chain, and a mesh deep enough to exceed the interpreter's recursion
+    limit is a graph we should still be able to draw. A node on a cycle takes its
+    depth from whichever parents resolve outside the cycle, and 0 if none do.
+    """
+    children: Dict[str, list] = {u: [] for u in parents}
+    indegree: Dict[str, int] = {u: 0 for u in parents}
+    for uid, ps in parents.items():
+        for p in ps:
+            if p in children:
+                children[p].append(uid)
+                indegree[uid] += 1
+
+    depth: Dict[str, int] = {}
+    queue = [u for u in parents if not indegree[u]]
+    head = 0
+    # only ever moves forward, so breaking cycles stays linear overall
+    cycle_scan = iter(parents)
+
+    while len(depth) < len(parents):
+        if head == len(queue):
+            # everything left sits on a cycle; cut it at the first unresolved node
+            for stuck in cycle_scan:
+                if stuck not in depth:
+                    queue.append(stuck)
+                    break
+            else:  # pragma: no cover - len(depth) < len(parents) guarantees one
+                break
+        uid = queue[head]
+        head += 1
+        if uid in depth:
+            continue
+        depth[uid] = max((depth[p] + 1 for p in parents[uid] if p in depth), default=0)
+        for c in children[uid]:
+            indegree[c] -= 1
+            if not indegree[c]:
+                queue.append(c)
+    return depth
+
+
 def _sql(text) -> str:
     text = (text or "").strip()
     if not text:
@@ -80,19 +123,7 @@ def build(merged, stitched_edges=(), title_layers=None, project_labels=None) -> 
     all_edges = edges + inferred
 
     # ---- depth (longest path from a root), cycle-safe ---------------------- #
-    depth: Dict[str, int] = {}
-
-    def resolve(uid: str, walked: frozenset = frozenset()) -> int:
-        if uid in depth:
-            return depth[uid]
-        if uid in walked:
-            return 0
-        d = max((resolve(p, walked | {uid}) + 1 for p in parents[uid]), default=0)
-        depth[uid] = d
-        return d
-
-    for uid in nodes:
-        resolve(uid)
+    depth = _longest_depths(parents)
 
     # ---- projects / lanes -------------------------------------------------- #
     pids = layout.order_projects(sorted({owner[u] for u in nodes}), title_layers)
@@ -175,19 +206,7 @@ def build(merged, stitched_edges=(), title_layers=None, project_labels=None) -> 
     pkg_parents = {p["name"]: [] for p in packages}
     for (pa, pb) in pkg_edges:
         pkg_parents[pb].append(pa)
-    pkg_depth: Dict[str, int] = {}
-
-    def pdepth(p, walked=frozenset()):
-        if p in pkg_depth:
-            return pkg_depth[p]
-        if p in walked:
-            return 0
-        d = max((pdepth(q, walked | {p}) + 1 for q in pkg_parents[p]), default=0)
-        pkg_depth[p] = d
-        return d
-
-    for p in pkg_parents:
-        pdepth(p)
+    pkg_depth = _longest_depths(pkg_parents)
     node_counts: Dict[str, int] = {}
     for n in out_nodes:
         node_counts[n["pkg"]] = node_counts.get(n["pkg"], 0) + 1
