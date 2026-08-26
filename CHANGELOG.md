@@ -6,6 +6,53 @@ All notable changes to this project are documented here. Format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **Deep graphs no longer crash.** Node depth and the project rollup were
+  computed recursively, so the recursion depth was the length of the longest
+  ancestor chain — and whether it overflowed also depended on manifest order,
+  since dbt does not emit nodes in topological order. A large enough mesh raised
+  `RecursionError` instead of rendering. Both now use an iterative pass, with
+  identical depths on every acyclic graph.
+- **The page title is escaped.** It was substituted into `<title>` and the
+  header verbatim, so a project name containing `<` truncated the page and a
+  crafted `--title` could inject markup. The three template placeholders are
+  also filled in one pass now; previously each substitution rescanned text the
+  last one inserted, so a title of `__GRAPH_DATA__` swallowed the payload.
+- **`py.typed` is shipped.** The package advertised `Typing :: Typed` but
+  included no marker, so type checkers silently fell back to `Any` for every
+  signature. Five public parameters that took an implicit `Optional` were
+  corrected along with it.
+- Every project loaded without a `catalog.json` shared one empty catalog
+  instance — and the module-level constant behind it. Nothing wrote to a catalog,
+  so this never surfaced; it is a factory function now.
+
+### Added
+
+- **`--version`**, printing the package, Python and platform versions in the one
+  line the bug report template asks for. The version is now written in one place
+  only, `__version__`, which `pyproject.toml` reads.
+- **Config files report what they ignore.** Every key was fetched with `.get()`,
+  so a near miss like `project:` for `projects:` parsed, ran, and produced an
+  empty page. Unknown keys are now warned about with a suggested correction and
+  counted by `--strict`; a malformed shape is an error that stops the build,
+  rather than — in the case of `projects:` given a string — being iterated one
+  character at a time into a traceback.
+- Tagging `vX.Y.Z` now publishes: the release workflow checks the tag against
+  `__version__` and the changelog, verifies the built wheel installs and runs on
+  its own, publishes to PyPI via Trusted Publishing, and opens a GitHub release
+  from the changelog section.
+
+### Internal
+
+- CI enforces ruff, mypy and 90% coverage, and runs the suite both with and
+  without PyYAML installed. Only one of those two parsers was ever exercised
+  before, and since dbt-core depends on PyYAML it was the one most users are
+  *not* on. Coverage also found the `dbt docs generate --static` reader
+  completely untested; it is now at 98%.
+- The ignored scratch directory `test/` was renamed `scratch/`, one keystroke
+  having been all that separated it from the tracked `tests/`.
+
 ## [0.1.3] - 2026-08-25
 
 Documentation only. No code changes.

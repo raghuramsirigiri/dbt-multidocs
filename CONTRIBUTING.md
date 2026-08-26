@@ -100,10 +100,32 @@ between `graph.py` and the template.
 
 ## Releasing
 
-1. Update `CHANGELOG.md`.
-2. Bump `version` in `pyproject.toml` and `__version__` in
-   `src/dbt_multidocs/__init__.py` — they must match.
-3. Tag `vX.Y.Z`. CI builds the wheel and checks the template is inside it.
+1. Bump `__version__` in `src/dbt_multidocs/__init__.py`. That is the only
+   place a version is written; `pyproject.toml` reads it.
+2. Move the `Unreleased` notes in `CHANGELOG.md` under a `## [X.Y.Z]` heading
+   and add the compare link at the bottom.
+3. Tag and push:
+
+   ```bash
+   git tag vX.Y.Z && git push --tags
+   ```
+
+`.github/workflows/release.yml` does the rest: it refuses to continue unless
+the tag matches `__version__` and the changelog has an entry for it, builds the
+wheel and sdist, checks the template and `py.typed` are inside the wheel,
+installs the wheel into a clean virtualenv and runs the CLI from it, publishes
+to PyPI, then opens a GitHub release with that changelog section as its notes.
+
+`workflow_dispatch` runs the build and its checks without publishing, which is
+worth doing before tagging anything.
+
+**PyPI publishing uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/),
+so no API token is stored in the repository.** It needs configuring once, on
+PyPI, before the first automated release: on the `dbt-multidocs` project, add a
+publisher for owner `raghuramsirigiri`, repository `dbt-multidocs`, workflow
+`release.yml`, environment `pypi` — and create a `pypi` environment in the
+repository settings. Until that exists the publish step fails; everything
+before it still runs.
 
 ## License
 
