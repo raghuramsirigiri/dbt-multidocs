@@ -82,3 +82,20 @@ def test_template_has_no_unreplaced_placeholders():
     for token in ("__TITLE__", "__GRAPH_DATA__", "__DATA_TYPE__"):
         assert token not in html
     assert "My Title" in html
+
+
+def test_title_cannot_inject_markup():
+    """The title reaches <title> and the header as text, so it must be escaped."""
+    html, _, _, _ = render.render(_payload(), "</title><script>alert(1)</script>")
+    assert "<script>alert(1)</script>" not in html
+    assert "&lt;/title&gt;&lt;script&gt;" in html
+    # the real <title> element is still intact and still the only one
+    assert html.count("<title>") == 1
+
+
+def test_a_title_that_names_a_placeholder_does_not_eat_the_payload():
+    """Placeholders are filled in one pass, so substituted text is never rescanned."""
+    payload = _payload()
+    html, _, _, _ = render.render(payload, "__GRAPH_DATA__")
+    assert html.count(json.dumps(payload["nodes"][0]["id"])) == 1
+    assert "<title>__GRAPH_DATA__</title>" in html

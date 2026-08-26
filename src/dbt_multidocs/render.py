@@ -12,6 +12,8 @@ import base64
 import gzip
 import json
 import pathlib
+import re
+from html import escape
 from typing import Optional
 
 TEMPLATE_NAME = "lineage.html"
@@ -22,6 +24,10 @@ COMPRESS_THRESHOLD = 1_000_000
 
 PLAIN_TYPE = "application/json"
 GZIP_TYPE = "application/gzip-base64"
+
+# Substituted in one pass: filling them one at a time would rescan text we had
+# just inserted, so a title of "__GRAPH_DATA__" would swallow the payload.
+_PLACEHOLDERS = re.compile("__TITLE__|__DATA_TYPE__|__GRAPH_DATA__")
 
 
 def default_template() -> pathlib.Path:
@@ -51,12 +57,17 @@ def render(graph: dict, title: str, template: Optional[pathlib.Path] = None,
            compress: str = "auto"):
     """Return (html, raw_bytes, stored_bytes, script_type)."""
     tpl = pathlib.Path(template) if template else default_template()
-    html = tpl.read_text(encoding="utf8")
+    text = tpl.read_text(encoding="utf8")
     payload, script_type, raw_bytes, stored = encode(graph, compress)
-    html = (html.replace("__TITLE__", title)
-                .replace("__DATA_TYPE__", script_type)
-                .replace("__GRAPH_DATA__", payload))
-    return html, raw_bytes, stored, script_type
+    # the title lands in <title> and in the header, both text contexts; a
+    # stray "<" in a project name must not be able to close either of them
+    values = {
+        "__TITLE__": escape(title or "", quote=False),
+        "__DATA_TYPE__": script_type,
+        "__GRAPH_DATA__": payload,
+    }
+    out = _PLACEHOLDERS.sub(lambda m: values[m.group()], text)
+    return out, raw_bytes, stored, script_type
 
 
 def write(graph: dict, out: pathlib.Path, title: str, template=None, compress: str = "auto"):
