@@ -75,7 +75,8 @@ def build(outdir, n_projects, n_models):
                 "depends_on": {"nodes": depends},
                 "config": {"materialized": "table" if m % 3 else "view"},
                 "columns": cols, "tags": ["nightly"] if m % 4 == 0 else [],
-                "raw_code": SQL, "compiled_code": SQL.replace("{{ ref('upstream') }}", "analytics.main.up"),
+                "raw_code": SQL,
+                "compiled_code": SQL.replace("{{ ref('upstream') }}", "analytics.main.up"),
                 "original_file_path": f"models/mdl_{m:04d}.sql",
                 "description": f"Model {m} in {proj}. " * 3,
             }

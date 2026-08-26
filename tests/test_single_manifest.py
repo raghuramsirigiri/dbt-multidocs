@@ -1,12 +1,9 @@
 """A single manifest that already carries several packages (dbt Mesh, or a
 `--static` docs bundle) must still split into one lane per package."""
-from dbt_multidocs import artifacts, graph, merge
+from dbt_multidocs import graph, merge
 
+from conftest import loaded as _loaded
 from conftest import manifest, model
-
-
-def _loaded(pid, doc):
-    return artifacts.Loaded(pid, doc, {"nodes": {}, "sources": {}}, None, None, [])
 
 
 def test_merged_manifest_splits_by_package_name():

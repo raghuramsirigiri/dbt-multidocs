@@ -80,6 +80,13 @@ def write_project(root: pathlib.Path, project: str, doc: dict, catalog: dict = N
     return root
 
 
+def loaded(pid, doc, catalog=None):
+    """An artifacts.Loaded built straight from a synthetic manifest."""
+    from dbt_multidocs import artifacts
+
+    return artifacts.Loaded(pid, doc, catalog or artifacts.empty_catalog(), None, None, [])
+
+
 @pytest.fixture
 def two_repos(tmp_path):
     """Two *unrelated* directories: upstream produces what downstream sources."""

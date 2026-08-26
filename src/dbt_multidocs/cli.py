@@ -6,7 +6,9 @@ import json
 import pathlib
 import sys
 
-from . import _yaml, artifacts, discovery, graph as graph_mod, merge as merge_mod, render, stitch
+from . import _yaml, artifacts, discovery, render, stitch
+from . import graph as graph_mod
+from . import merge as merge_mod
 
 DEFAULT_OUT = pathlib.Path("dbt-docs") / "lineage.html"
 
@@ -76,20 +78,20 @@ def cmd_build(args) -> int:
     loaded, warnings = [], []
     for p in projects:
         try:
-            l = artifacts.load(p)
+            art = artifacts.load(p)
         except artifacts.ArtifactError as exc:
-            raise SystemExit("error: {}".format(exc))
-        if not p.project_name and l.manifest.get("metadata", {}).get("project_name"):
+            raise SystemExit("error: {}".format(exc)) from exc
+        if not p.project_name and art.manifest.get("metadata", {}).get("project_name"):
             # pointed straight at a manifest with no dbt_project.yml beside it -
             # the manifest knows its own name better than the filename does
             taken = {q.id for q in projects if q is not p}
-            named = l.manifest["metadata"]["project_name"]
+            named = art.manifest["metadata"]["project_name"]
             if named not in taken:
                 if p.label == discovery._pretty_label(p.id):
                     p.label = discovery._pretty_label(named)
-                p.id = l.project_id = named
-        loaded.append(l)
-        warnings.extend(l.warnings)
+                p.id = art.project_id = named
+        loaded.append(art)
+        warnings.extend(art.warnings)
 
     merged = merge_mod.merge(loaded)
 
@@ -136,9 +138,9 @@ def cmd_build(args) -> int:
         jp.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf8")
 
     s = payload["stats"]
-    for p, l in zip(projects, loaded):
+    for p, art in zip(projects, loaded):
         own = sum(1 for uid, o in merged.owner.items() if o == p.id)
-        print("  {:<24} {:>4} nodes   {}".format(p.id, own, l.manifest_path))
+        print("  {:<24} {:>4} nodes   {}".format(p.id, own, art.manifest_path))
     size_kb = out.stat().st_size / 1024
     if written["compressed"]:
         print("written  : {}  ({:.0f} KB, payload gzipped {:.1f} MB -> {:.0f} KB)".format(

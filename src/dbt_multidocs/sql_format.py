@@ -128,7 +128,7 @@ def format_sql(sql: str) -> str:
         i += 1
 
     flush()
-    text = "\n".join(l.rstrip() for l in out if l.strip())
+    text = "\n".join(line.rstrip() for line in out if line.strip())
     # a clause keyword line followed by its body reads better joined when short
     text = re.sub(r"\n +", lambda m: "\n" + m.group()[1:], text)
     return text if text.strip() else sql

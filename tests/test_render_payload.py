@@ -5,8 +5,8 @@ import json
 
 from dbt_multidocs import graph, merge, render
 
+from conftest import loaded as _loaded
 from conftest import manifest, model
-from test_merge_graph import _loaded
 
 
 def _payload(n_models=1, sql=""):

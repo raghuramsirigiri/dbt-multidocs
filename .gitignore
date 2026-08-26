@@ -11,3 +11,7 @@ dbt-docs/
 # temp output files
 temp/
 test/
+
+# coverage
+.coverage
+htmlcov/

@@ -14,6 +14,20 @@ python -m venv .venv
 The suite runs in under a second and needs no dbt install, no warehouse, and no
 network.
 
+Lint and type-check the way CI does — these live in a separate `[lint]` extra so
+the test matrix does not have to resolve them:
+
+```bash
+.venv/bin/pip install -e ".[lint]"
+.venv/bin/ruff check src tests tools
+.venv/bin/mypy
+```
+
+Do not add PyYAML to your environment out of habit. Without it the suite
+exercises the bundled fallback parser; with it, PyYAML's. Both are real
+configurations — CI runs both, and the `yaml_parser` fixture covers each test
+either way — so it is worth knowing which one you are looking at.
+
 ## Constraints that PRs are held to
 
 These are design decisions, not oversights. If a change needs to break one,
@@ -22,7 +36,8 @@ raise an issue first so we can talk about it.
 **No runtime dependencies.** Stdlib only, so the package installs in CI, in
 air-gapped environments, and next to any dbt version without resolver conflicts.
 That is also why there is a small YAML reader in `_yaml.py` instead of a PyYAML
-dependency. `[dev]` is `pytest` and nothing else.
+dependency. `[dev]` is pytest and coverage; `[lint]` is ruff and mypy. Neither
+may leak into `dependencies`.
 
 **Artifacts only.** The tool reads `manifest.json` and `catalog.json`. It never
 invokes dbt, opens a warehouse connection, or reads `profiles.yml`. Anything

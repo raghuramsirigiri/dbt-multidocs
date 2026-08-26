@@ -68,7 +68,8 @@ def merge(loaded_list) -> Merged:
                 claimed[uid] = True
             elif is_owner and claimed.get(uid) and owner[uid] != pid:
                 conflicts.append(
-                    "{}: claimed by both {} and {}; kept {}".format(uid, owner[uid], pid, owner[uid])
+                    "{}: claimed by both {} and {}; kept {}".format(
+                        uid, owner[uid], pid, owner[uid])
                 )
 
         for uid, entry in (loaded.catalog.get("nodes") or {}).items():
@@ -91,7 +92,7 @@ def merge(loaded_list) -> Merged:
         owner=owner,
         tests=tests,
         catalogs=catalogs,
-        project_ids=[l.project_id for l in loaded_list],
+        project_ids=[ld.project_id for ld in loaded_list],
         metadata=metadata,
         conflicts=conflicts,
         orphans=orphans,

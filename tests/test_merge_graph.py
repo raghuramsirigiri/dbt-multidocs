@@ -4,11 +4,8 @@ import pytest
 
 from dbt_multidocs import artifacts, discovery, graph, merge, render, stitch
 
-from conftest import manifest, model, source, write_project
-
-
-def _loaded(pid, doc, catalog=None):
-    return artifacts.Loaded(pid, doc, catalog or {"nodes": {}, "sources": {}}, None, None, [])
+from conftest import loaded as _loaded
+from conftest import manifest, model, write_project
 
 
 def test_owner_wins_over_first_sighting():
