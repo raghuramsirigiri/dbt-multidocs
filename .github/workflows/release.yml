@@ -5,12 +5,9 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # a manual run builds and checks but never publishes: the publishing jobs
+  # only run for a tag ref
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: "Build and check, but do not publish"
-        type: boolean
-        default: true
 
 permissions:
   contents: read
